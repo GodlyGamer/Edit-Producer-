@@ -7,6 +7,7 @@
 @font-face{font-family:G;font-weight:700;src:url(assets/fonts/Geist-700.woff2)}
 @font-face{font-family:G;font-weight:800;src:url(assets/fonts/Geist-800.woff2)}
 @font-face{font-family:G;font-weight:900;src:url(assets/fonts/Geist-900.woff2)}
+@font-face{font-family:N;font-weight:300 800;src:url(assets/fonts/Newsreader-var.woff2)}
 @font-face{font-family:M;font-weight:500;src:url(assets/fonts/GeistMono-500.woff2)}
 @font-face{font-family:M;font-weight:600;src:url(assets/fonts/GeistMono-600.woff2)}
 html,body{margin:0;background:#000}canvas{display:block}
@@ -120,185 +121,266 @@ function flapSolid(X,Y,s,phase,white){
 }
 const FLAP=7.5; // wingbeat speed (rad/s)
 
-// ---------- cinematic helpers ----------
-const GLOW='rgba(120,150,255,1)';
-function cam(s,cx=W/2,cy=H/2){x.translate(W/2,H/2);x.scale(s,s);x.translate(-cx,-cy);}
-// glowing text: blurred halo underneath, crisp text on top
-function GT(s,X,Y,size,{w=500,c='#eef1ff',a='left',alpha=1,ls=0,glow=.8,blur=0,f='G'}={}){
-  if(alpha<=0)return;x.save();x.globalAlpha*=alpha;font(size,w,f);x.textAlign=a;x.textBaseline='alphabetic';if(ls)x.letterSpacing=ls+'px';
-  if(blur>0)x.filter=`blur(${blur}px)`;
-  if(glow>0){x.shadowColor=`rgba(120,150,255,${glow})`;x.shadowBlur=size*.6;}
-  x.fillStyle=c;x.fillText(s,X,Y);x.restore();}
-// a light streak: an arc with a hot core and a wide soft halo
-function streak(cx,cy,r,a0,len,w,alpha=1){if(alpha<=0)return;
-  x.save();x.globalAlpha*=alpha;x.lineCap='round';x.globalCompositeOperation='lighter';
-  [[w*4,'rgba(60,90,255,.25)',w*6],[w*1.8,'rgba(110,140,255,.7)',w*3],[w*.6,'rgba(230,238,255,.95)',w]].forEach(([lw,c,b])=>{
-    x.strokeStyle=c;x.lineWidth=lw;x.shadowColor=GLOW;x.shadowBlur=b;
-    const steps=24;for(let i=0;i<steps;i++){const t0=a0+len*i/steps,t1=a0+len*(i+1)/steps,taper=Math.sin(Math.PI*(i+.5)/steps);
-      x.globalAlpha=alpha*taper;x.beginPath();x.arc(cx,cy,r,t0,t1);x.stroke();}});
-  x.restore();}
-// the deep blue "liquid" glow along the bottom of the frame
-function floorGlow(t,level=1,yBase=H*.82){if(level<=0)return;
-  x.save();x.globalAlpha=clamp(level);x.filter='blur(70px)';
-  const g=x.createLinearGradient(0,yBase-200,0,H);g.addColorStop(0,'rgba(60,90,255,.0)');g.addColorStop(.35,'rgba(70,100,255,.85)');g.addColorStop(1,'rgba(36,52,138,1)');
-  x.fillStyle=g;x.beginPath();x.moveTo(-100,H+100);
-  for(let i=0;i<=24;i++){const u=i/24,X=-100+u*(W+200);x.lineTo(X,yBase+Math.sin(u*5+t*1.3)*55+Math.sin(u*11-t*.9)*25-Math.exp(-Math.pow((u-.5)*3,2))*60);}
-  x.lineTo(W+100,H+100);x.closePath();x.fill();x.restore();}
-function vignette(){const g=x.createRadialGradient(W/2,H/2,H*.3,W/2,H/2,H*1.05);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.7)');x.fillStyle=g;x.fillRect(0,0,W,H);}
-function chatBox(X,Y,w,h,{text='',caretOn=true,glowTail=0,showFoot=true}={}){
-  x.save();x.fillStyle='rgba(28,29,34,.96)';rr(X,Y,w,h,30);x.fill();x.strokeStyle='rgba(255,255,255,.12)';x.lineWidth=2;x.stroke();
-  // typed text: the last few characters still glowing in, like the reference
-  font(30,400);let cx=X+40;const n=text.length;
-  for(let i=0;i<n;i++){const ch=text[i],age=n-1-i,hot=clamp(1-age/5)*glowTail;
-    x.save();x.fillStyle=hot>.05?`rgb(${lerp(238,150,hot)},${lerp(241,175,hot)},255)`:'#eef1ff';
-    if(hot>.05){x.shadowColor=GLOW;x.shadowBlur=24*hot;x.filter=`blur(${hot*2.5}px)`;}
-    x.fillText(ch,cx,Y+64);x.restore();cx+=x.measureText(ch).width;}
-  if(caretOn){x.fillStyle='#eef1ff';x.fillRect(cx+4,Y+38,3,34);}
-  if(showFoot){T('+',X+40,Y+h-30,40,{w:300,c:'#c9cbd6'});
-    x.fillStyle=P.navy3;x.beginPath();x.arc(X+w-50,Y+h-44,24,0,7);x.fill();
-    x.strokeStyle='#fff';x.lineWidth=3.5;x.lineCap='round';x.beginPath();x.moveTo(X+w-50,Y+h-33);x.lineTo(X+w-50,Y+h-55);x.moveTo(X+w-59,Y+h-46);x.lineTo(X+w-50,Y+h-55);x.lineTo(X+w-41,Y+h-46);x.stroke();}
-  x.restore();}
-function chip(X,Y,label){font(22,500);const w=x.measureText(label).width+44;x.save();x.strokeStyle='rgba(255,255,255,.16)';x.lineWidth=2;rr(X,Y,w,48,14);x.stroke();
-  T(label,X+22,Y+32,22,{w:500,c:'#c9cbd6'});x.restore();return w;}
-function stepTag(n,label,X,Y,alpha=1,size=26){GT(`STEP ${n}`,X,Y,size*.7,{f:'M',w:600,c:P.blueHi,ls:3,alpha,glow:.6});GT(label,X,Y+size*1.5,size,{w:500,alpha,glow:.5});}
-
 const scenes=[];const S=(a,b,fn)=>scenes.push({a,b,fn});
+// =====================================================================
+// Rebuilt to follow the reference shot for shot (timings in seconds).
+// Rendering: crisp main canvas + an emissive layer that is bloomed
+// (downsampled, blurred, added back) so glows are soft but text stays sharp.
+// =====================================================================
+function mk(w,h){const c=document.createElement('canvas');c.width=Math.round(w);c.height=Math.round(h);return c;}
+const E=mk(W,H),ex=E.getContext('2d');
+const B1=mk(W/4,H/4),b1=B1.getContext('2d'),B2=mk(W/12,H/12),b2=B2.getContext('2d');
+function emit(fn){const m=x,T=m.getTransform();x=ex;x.save();x.setTransform(T);x.globalAlpha=m.globalAlpha;fn();x.restore();x=m;} // glow layer follows the camera
+function bloom(str=1){
+  b1.clearRect(0,0,B1.width,B1.height);b1.filter='blur(2px)';b1.drawImage(E,0,0,B1.width,B1.height);
+  b2.clearRect(0,0,B2.width,B2.height);b2.filter='blur(2px)';b2.drawImage(B1,0,0,B2.width,B2.height);
+  x.save();x.globalCompositeOperation='lighter';x.imageSmoothingQuality='high';
+  x.globalAlpha=.85*str;x.drawImage(B1,0,0,W,H);x.globalAlpha=1.1*str;x.drawImage(B2,0,0,W,H);x.globalAlpha=.6*str;x.drawImage(E,0,0);x.restore();}
 
-// 0 – 1.9 : logo reveal inside a ring of light
-S(0,1.9,t=>{
-  bg('#000');x.save();cam(lerp(1.0,1.12,eo(t/1.9)));
-  const ra=t*1.6;
-  streak(W/2,H/2,420,ra-2.2,lerp(.2,2.4,eo(prog(t,0,1.2))),9,prog(t,0,.4));
-  streak(W/2,H/2,470,ra+1.2,lerp(.1,1.6,eo(prog(t,.15,1.3))),6,prog(t,.15,.5)*.8);
-  // dragon first, then the wordmark wipes on
-  const k=eo(prog(t,.05,.45));font(118,700);x.letterSpacing='-3px';const tw=x.measureText('Mentaljineer').width;x.letterSpacing='0px';
-  const ds=150,total=ds+24+tw,x0=W/2-total/2;
-  x.save();x.shadowColor=GLOW;x.shadowBlur=40;flapDragon(x0+ds/2,H/2-20,ds*lerp(.4,1,eback(k)),t*FLAP*1.3,{alpha:k});x.restore();
-  const wipe=eo(prog(t,.35,1.2));x.save();x.beginPath();x.rect(x0+ds+10,0,(tw+40)*wipe,H);x.clip();
-  GT('Mentaljineer',x0+ds+24,H/2+20,118,{w:700,ls:-3,glow:.9,blur:lerp(6,0,wipe)});x.restore();
-  GT('A private tutor plugin in ChatGPT. No coding, no server, no Custom GPT.',W/2,H/2+120,30,{a:'center',c:'#aeb8e6',alpha:prog(t,1.0,1.35),glow:.4});
-  x.restore();vignette();
+const BLUE=[70,105,255],ICE=[200,214,255],WHITE=[236,240,252];
+const rgb=(c,a=1)=>`rgba(${c[0]|0},${c[1]|0},${c[2]|0},${a})`;
+const mix=(a,b,k)=>[lerp(a[0],b[0],k),lerp(a[1],b[1],k),lerp(a[2],b[2],k)];
+
+// text on the main canvas (optionally defocused) + its halo on the glow layer
+function txt(s,X,Y,size,{f='N',w=400,c=WHITE,a='left',alpha=1,blur=0,ls=0,glow=0,glowC=BLUE}={}){
+  if(alpha<=.003)return;
+  const draw=(col,al,bl)=>{x.save();x.globalAlpha*=al;font(size,w,f);x.textAlign=a;x.textBaseline='alphabetic';
+    if(ls)x.letterSpacing=ls+'px';if(bl>.25)x.filter=`blur(${bl}px)`;x.fillStyle=rgb(col);x.fillText(s,X,Y);x.restore();};
+  draw(c,alpha,blur);
+  if(glow>0)emit(()=>draw(glowC,alpha*glow,blur+size*.04));}
+function tw(s,size,w=400,f='N',ls=0){font(size,w,f);x.letterSpacing=ls+'px';const v=x.measureText(s).width;x.letterSpacing='0px';return v;}
+
+// comet: tapered trail along path(τ) from τ=t-len to t, bright head
+function comet(path,t,len,w,alpha=1,t0=-1e9){
+  if(alpha<=.01)return;const a0=Math.max(t-len,t0);if(t-a0<.004)return;const N=26;const P=[];
+  for(let i=0;i<=N;i++)P.push(path(lerp(a0,t,i/N)));
+  const pass=(lw,col,al)=>{x.save();x.lineCap='round';for(let i=0;i<N;i++){const k=(i+1)/N;
+    x.globalAlpha=alpha*al*Math.pow(k,1.2);x.strokeStyle=col;x.lineWidth=lw*(.15+.85*Math.pow(k,.7));
+    x.beginPath();x.moveTo(...P[i]);x.lineTo(...P[i+1]);x.stroke();}x.restore();};
+  pass(w*.55,'rgb(235,242,255)',1);
+  emit(()=>{pass(w*2.4,rgb(BLUE),1);pass(w*1.1,'rgb(170,190,255)',1);});}
+
+// soft glowing ring segment (reference's concentric light rings)
+function ringArc(cx,cy,r,a0,len,w,alpha){if(alpha<=.01)return;
+  // one continuous stroke whose brightness fades in and out along the arc (conic gradient)
+  const pass=(lw,c,al)=>{const g=x.createConicGradient(a0,cx,cy),f=Math.min(.999,len/(Math.PI*2));
+    g.addColorStop(0,rgb(c,0));g.addColorStop(f*.5,rgb(c,al*alpha));g.addColorStop(f,rgb(c,0));g.addColorStop(1,rgb(c,0));
+    x.save();x.strokeStyle=g;x.lineWidth=lw;x.beginPath();x.arc(cx,cy,r,a0,a0+len);x.stroke();x.restore();};
+  pass(w*.35,[120,150,255],.6);emit(()=>pass(w,BLUE,.95));}
+// the saturated blue "floor" glow: drawn tiny, blurred, scaled up
+const FL=mk(192,108),fl=FL.getContext('2d');
+function floor(t,level=1,crest=H*.72,{dip=.42,hill=.82}={}){if(level<=0)return;
+  const s=192/W;fl.clearRect(0,0,192,108);fl.save();fl.filter='blur(5px)';fl.scale(s,s);
+  const path=(off,amp)=>{fl.beginPath();fl.moveTo(-200,H+300);
+    for(let i=0;i<=40;i++){const u=i/40,X=-200+u*(W+400);
+      const y=crest+off+amp*(38*Math.sin(u*4.2+t*.55)+22*Math.sin(u*9.5-t*.8)+90*Math.exp(-Math.pow((u-dip)*4.5,2))-110*Math.exp(-Math.pow((u-hill)*3.2,2)));
+      fl.lineTo(X,y);}fl.lineTo(W+200,H+300);fl.closePath();};
+  let g=fl.createLinearGradient(0,crest-150,W,H);g.addColorStop(0,'rgb(18,34,150)');g.addColorStop(.55,'rgb(32,62,235)');g.addColorStop(1,'rgb(60,96,255)');
+  path(0,1);fl.fillStyle=g;fl.fill();
+  g=fl.createLinearGradient(0,crest,0,H);g.addColorStop(0,'rgba(90,125,255,0)');g.addColorStop(.6,'rgba(90,125,255,.55)');g.addColorStop(1,'rgba(120,150,255,.8)');
+  path(60,.8);fl.fillStyle=g;fl.fill();fl.restore();
+  x.save();x.globalAlpha=clamp(level);x.imageSmoothingQuality='high';x.drawImage(FL,0,0,W,H);x.restore();}
+function vignette(a=.55){const g=x.createRadialGradient(W/2,H/2,H*.35,W/2,H/2,H*1.1);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,`rgba(0,0,0,${a})`);x.fillStyle=g;x.fillRect(0,0,W,H);}
+
+// ---------------------------------------------------------------- 0 – 2.0
+// dragon fades in, letters glow in one by one while the word re-centres,
+// rings of light expand behind; then each letter peels off as a comet
+const WORD='Mentaljineer',WSZ=104,ICON=92,GAP=26;
+const LA=[...WORD].map((_,i)=>.36+i*.068);           // letter appear times
+const LD=[...WORD].map((_,i)=>1.70+i*.022);          // letter dissolve times
+let LW=null,LX=null,LY=0;
+function layoutWord(){LW=[...WORD].map(ch=>tw(ch,WSZ,500));}
+function groupCam(t){return {s:lerp(1.05,.95,eio(clamp(t/2))),dy:lerp(14,-34,eio(clamp(t/2)))};}
+const CR=rnd(91),CP=[...WORD].map(()=>({vx:(CR()-.5)*900,up:420+CR()*380,g:900+CR()*500,A:60+CR()*120,B:40+CR()*90,om:5+CR()*5,ph:CR()*6.28}));
+function letterPos(i,t){ // screen position of letter i's centre at time t (follows the group layout + camera)
+  const vis=(tt)=>ICON+GAP+LW.reduce((a,w,j)=>a+w*eo(prog(tt,LA[j],LA[j]+.32)),0);
+  const tt=Math.min(t,LD[0]);const VW=vis(tt),left=W/2-VW/2;const c=groupCam(tt);
+  let lx=left+ICON+GAP;for(let j=0;j<i;j++)lx+=LW[j];lx+=LW[i]/2;
+  const X=W/2+(lx-W/2)*c.s,Y=H/2+(c.dy+(-WSZ*.33))*c.s;return [X,Y,left,c];}
+function cometPath(i){const [lx,ly]=letterPos(i,LD[i]);const p=CP[i];
+  return tau=>{const s=Math.max(0,tau-LD[i]);
+    return [lx+p.vx*s+p.A*(Math.sin(p.om*s+p.ph)-Math.sin(p.ph)),
+            ly-p.up*s+p.g*s*s*.5+p.B*(Math.cos(p.om*s+p.ph)-Math.cos(p.ph))];};}
+let CPATH=null;
+function swarm(t){ // comets born from the letters, alive until ~3.2s
+  for(let i=0;i<WORD.length;i++){if(t<LD[i])continue;
+    const al=prog(t,LD[i],LD[i]+.06)*(1-prog(t,2.75+i*.03,3.15+i*.02));comet(CPATH[i],t,.2,9,al,LD[i]);}}
+S(0,2.0,t=>{
+  bg('#000');
+  // rings
+  [0,1,2,3,4].forEach(i=>{const r=(300+i*210)*(1+.10*t),a=prog(t,.15+i*.12,.7+i*.12)*(1-prog(t,1.75,2.0)*.6);
+    ringArc(W/2,H/2+20,r,2.4+i*1.7+t*(.35+i*.08)*(i%2?-1:1),1.3+(i%3)*.5,46+i*6,a*.9);
+    ringArc(W/2,H/2+20,r,5.1+i*1.3-t*(.28+i*.05),.9+(i%2)*.6,40,a*.6);});
+  const [,,left,c]=letterPos(0,t);
+  x.save();x.translate(W/2,H/2);x.scale(c.s,c.s);x.translate(-W/2,-H/2+c.dy);
+  // dragon icon
+  const ia=prog(t,.08,.32)*(1-prog(t,1.6,1.78));
+  if(ia>0){const pos=[left+ICON/2,H/2-WSZ*.36];
+    flapDragon(pos[0],pos[1],ICON,t*FLAP,{alpha:ia});emit(()=>flapDragon(pos[0],pos[1],ICON,t*FLAP,{alpha:ia*.5}));}
+  // letters
+  let lx=left+ICON+GAP;
+  [...WORD].forEach((ch,i)=>{const p=eo(prog(t,LA[i],LA[i]+.32)),d=prog(t,LD[i],LD[i]+.07);
+    const al=p*(1-d);if(al>0)txt(ch,lx,H/2,WSZ,{w:500,alpha:al,blur:(1-p)*9+d*4,c:mix(ICE,WHITE,p),glow:lerp(1,.28,p)+d});
+    lx+=LW[i];});
+  x.restore();
+  swarm(t);bloom();vignette();
 });
 
-// 1.9 – 2.7 : streaks swirl, an "@" drifts through
-S(1.9,2.7,t=>{
-  const lt=t-1.9;bg('#000');floorGlow(t,prog(lt,.2,.8)*.7,H*1.05);
-  streak(W/2-200,H/2-100,300,lt*5-1,1.1,10,1);streak(W/2+260,H/2-40,260,-lt*4+2,.9,8,.9);streak(W/2,H/2+60,520,lt*2.5+.4,.7,6,.7);
-  GT('@',W/2+lerp(160,40,eo(lt/.8)),H/2-lerp(200,120,lt/.8),110,{w:500,blur:lerp(10,2,lt/.8),glow:1});
-  vignette();
+// ---------------------------------------------------------------- 2.0 – 6.6
+// one continuous UI shot: comets swirl, box rises, words fly into place,
+// heading + chips appear, fast zoom to the menu, selection changes, pull out
+const BOXW=1180,BOXH=214;
+const MSG=[['@Plugin',1],['Creator',1],['Create',0],['a',0],['private',0],['plugin',0],['called',0],['“Adaptive',0],['Tutor”',0]];
+const MR=rnd(12),MORDER=[3,0,6,1,8,4,2,7,5],MOFF=MSG.map(()=>[(MR()-.5)*520,(MR()-.5)*170]);
+const HEAD=['Build','your','own','tutor.'];
+const CHIPS=['Plugin Creator','Paste the brief','Paste the prompt','Enable it','Test it'];
+const MENU=[['Plugin Creator','Builds private plugins for you'],['Adaptive Tutor','Teaches at the edge of what you know'],['Settings → Plugins','If Plugin Creator isn’t listed']];
+function boxY(t){return lerp(H*1.12,H*.46,eo(prog(t,2.05,2.85)))-lerp(0,H*.06,eio(prog(t,3.15,3.6)));}
+function uiCam(t){ // returns scale + focus point (world coords)
+  const fx=W/2+BOXW/2-150,fy=boxY(t)-90;               // menu / selector region
+  let s=1,cx=W/2,cy=H/2;
+  s=lerp(1,1.05,eio(prog(t,3.55,4.2)));
+  const z=eio(prog(t,4.16,4.38));s=lerp(s,2.1,z);cx=lerp(cx,fx,z);cy=lerp(cy,fy,z);
+  const d=prog(t,4.38,5.55);s+=.12*d*z;cx-=70*eio(d)*z;cy+=18*eio(d)*z;
+  const o=eio(prog(t,5.5,6.0));s=lerp(s,1.12,o);cx=lerp(cx,W/2+30,o);cy=lerp(cy,H/2-10,o);
+  return {s,cx,cy};}
+function drawUI(t){
+  const by=boxY(t),bx=W/2-BOXW/2,uiA=1;
+  // heading
+  const hy=by-78;const hw=HEAD.map(w=>tw(w,66,400))  ;const sp=18,total=hw.reduce((a,b)=>a+b,0)+sp*(HEAD.length-1)+76;
+  let hx=W/2-total/2;const da=prog(t,3.2,3.4);
+  if(da>0)flapDragon(hx+30,hy-22,64,t*FLAP*1.2,{alpha:da});
+  hx+=76;HEAD.forEach((w,i)=>{const p=eo(prog(t,3.26+i*.08,3.56+i*.08));txt(w,hx,hy,66,{alpha:p,blur:(1-p)*7,c:mix([120,126,150],WHITE,p),glow:0});hx+=hw[i]+sp;});
+  // box
+  x.save();x.globalAlpha=uiA*prog(t,2.05,2.3);x.fillStyle='rgba(34,35,41,.86)';rr(bx,by,BOXW,BOXH,30);x.fill();
+  x.strokeStyle='rgba(255,255,255,.10)';x.lineWidth=2;x.stroke();x.restore();
+  // message words: pop in scattered, glide into place
+  font(30,400,'G');let wx=bx+44;const wy=by+66;
+  MSG.forEach(([w,men],i)=>{const ww=tw(w,30,men?500:400,'G');const a=2.70+MORDER[i]*.055,p=eo(prog(t,a,a+.38));
+    if(p>0){const X=wx+MOFF[i][0]*(1-p),Y=wy+MOFF[i][1]*(1-p);
+      const col=men?mix(ICE,[150,175,255],p):mix(ICE,WHITE,p);
+      txt(w,X,Y,30,{f:'G',w:men?500:400,alpha:clamp(p*4),blur:(1-p)*3,c:col,glow:lerp(1.2,0,p)});}
+    wx+=ww+(i===1?14:10);});
+  // footer: plus, selector, send
+  const fa=prog(t,3.28,3.5);
+  if(fa>0){txt('+',bx+44,by+BOXH-36,40,{f:'G',w:300,c:[190,194,210],alpha:fa});
+    const sx=bx+BOXW-96;x.save();x.globalAlpha=fa;x.fillStyle='rgb(60,92,245)';rr(sx+10,by+BOXH-74,52,52,13);x.fill();
+    x.strokeStyle='#fff';x.lineWidth=4;x.lineCap='round';x.lineJoin='round';x.beginPath();x.moveTo(sx+36,by+BOXH-36);x.lineTo(sx+36,by+BOXH-60);x.moveTo(sx+26,by+BOXH-50);x.lineTo(sx+36,by+BOXH-60);x.lineTo(sx+46,by+BOXH-50);x.stroke();x.restore();
+    emit(()=>{x.globalAlpha=fa*.5;x.fillStyle=rgb(BLUE);rr(sx+10,by+BOXH-74,52,52,13);x.fill();});
+    // selector label with a vertical slide when the selection changes
+    const sw=eio(prog(t,5.32,5.58));const rx=sx-14;
+    x.save();x.beginPath();x.rect(rx-320,by+BOXH-78,330,60);x.clip();
+    txt('Plugin Creator  ⌄',rx,by+BOXH-38-26*sw,22,{f:'G',w:500,a:'right',c:[200,204,218],alpha:fa*(1-sw)});
+    txt('Adaptive Tutor  ⌄',rx,by+BOXH-38+26*(1-sw),22,{f:'G',w:600,a:'right',c:[150,175,255],alpha:fa*sw,glow:.5*sw});
+    x.restore();}
+  // chips
+  let cx0=0;const cw=CHIPS.map(c=>tw(c,21,500,'G')+78);const ctot=cw.reduce((a,b)=>a+b,0)+14*(CHIPS.length-1);cx0=W/2-ctot/2;
+  CHIPS.forEach((c,i)=>{const p=eo(prog(t,3.34+i*.06,3.6+i*.06));if(p<=0){cx0+=cw[i]+14;return;}
+    x.save();x.globalAlpha=p;x.strokeStyle='rgba(255,255,255,.16)';x.lineWidth=2;rr(cx0,by+BOXH+22,cw[i],50,14);x.stroke();x.restore();
+    txt(String(i+1),cx0+24,by+BOXH+55,19,{f:'M',w:600,c:[150,175,255],alpha:p});
+    txt(c,cx0+50,by+BOXH+55,21,{f:'G',w:500,c:[200,204,218],alpha:p});cx0+=cw[i]+14;});
+  // mention menu
+  const ma=eo(prog(t,4.2,4.34));
+  if(ma>0){const mw=470,mh=246,mx=bx+BOXW-mw-60,my=by-mh+40;
+    x.save();x.globalAlpha=ma;x.shadowColor='rgba(0,0,0,.6)';x.shadowBlur=40;x.fillStyle='rgb(30,31,37)';rr(mx,my+12*(1-ma),mw,mh,18);x.fill();
+    x.shadowColor='transparent';x.strokeStyle='rgba(255,255,255,.10)';x.lineWidth=1.5;x.stroke();
+    const sel=eio(prog(t,5.32,5.58));const hy2=my+10+lerp(0,74,sel);
+    x.fillStyle='rgba(255,255,255,.06)';rr(mx+8,hy2,mw-16,70,12);x.fill();x.restore();
+    MENU.forEach(([n,d],i)=>{const iy=my+46+i*74;
+      txt(n,mx+26,iy,23,{f:'G',w:500,c:i===2?[176,180,196]:WHITE,alpha:ma});
+      txt(d,mx+26,iy+26,16,{f:'G',w:400,c:[140,144,160],alpha:ma*eo(prog(t,4.42+i*.12,4.75+i*.12))});});
+    // tick moves with the selection
+    [[0,1-sel],[1,sel]].forEach(([i,a])=>{if(a<=0)return;const ty=my+40+i*74;x.save();x.globalAlpha=ma*a;x.strokeStyle='rgb(160,182,255)';x.lineWidth=3;x.lineCap='round';x.lineJoin='round';
+      x.beginPath();x.moveTo(mx+mw-52,ty);x.lineTo(mx+mw-43,ty+9);x.lineTo(mx+mw-27,ty-8);x.stroke();x.restore();});}
+}
+const UIC=mk(W,H);
+S(2.0,6.62,t=>{
+  bg('#000');
+  floor(t,prog(t,2.3,3.0),lerp(H*1.05,H*.76,eo(prog(t,2.3,3.2))),{dip:.48,hill:.85});
+  const c=uiCam(t);const out=prog(t,6.0,6.5);
+  const drawWorld=()=>{x.save();x.translate(W/2,H/2);x.scale(c.s,c.s);x.translate(-c.cx,-c.cy);drawUI(t);x.restore();};
+  if(out<=0)drawWorld();
+  else{ // defocus and fade the whole UI as one layer
+    const m=x,me=ex;const g=UIC.getContext('2d');g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,W,H);
+    x=g;emitOff=true;drawWorld();x=m;emitOff=false;
+    x.save();x.globalAlpha=1-eio(out);x.filter=`blur(${out*14}px)`;x.drawImage(UIC,0,0);x.restore();}
+  swarm(t);
+  // the send button throws a comet that loops through the dark (continues in the next shot)
+  if(t>5.95){comet(LOOP,t,.28,10,prog(t,5.95,6.05));}
+  bloom();vignette(.45);
 });
+let emitOff=false;const _emit=emit;emit=function(fn){if(emitOff)return;_emit(fn);};
+// loop path for the single comet, starting at the send button's screen position
+let LOOP=null;
+function buildLoop(){const c=uiCam(6.0),by=boxY(6.0);const wx=W/2+BOXW/2-96+36,wy=by+BOXH-48;
+  const sx=W/2+(wx-c.cx)*c.s,sy=H/2+(wy-c.cy)*c.s;
+  LOOP=tau=>{const s=Math.max(0,tau-5.95);const R=lerp(160,330,clamp(s/1.1)),a=-s*4.4;
+    const cx=sx-R-s*260,cy=sy-120-s*120;return [cx+R*Math.cos(a),cy+R*Math.sin(a)*.8];};}
+S(6.62,7.18,t=>{bg('#000');floor(t,.35*(1-prog(t,6.62,7.0)),H*.9);comet(LOOP,t,.3,10,1-prog(t,6.95,7.15));bloom();vignette(.45);});
 
-// 2.7 – 3.4 : the chat box rises in and "@Plugin Creator" types
-S(2.7,3.4,t=>{
-  const lt=t-2.7;bg('#000');floorGlow(t,.95,H*.86);
-  streak(420,300,260,lt*3-2.2,.8,8,1-prog(lt,.3,.7));
-  const y=lerp(H*.62,H*.42,eo(prog(lt,0,.35)));
-  x.save();x.filter=`blur(${lerp(8,0,eo(prog(lt,0,.3)))}px)`;
-  chatBox(W/2-560,y,1120,180,{text:typed('@Plugin Creator',prog(lt,.15,.65)),glowTail:1});x.restore();
-  vignette();
-});
-
-// 3.4 – 4.6 : pull back: Step 1 heading, box, chips
-S(3.4,4.6,t=>{
-  const lt=t-3.4;bg('#000');floorGlow(t,1,H*.86);
-  x.save();cam(lerp(1.0,1.06,lt/1.2));
-  const hy=H*.33;x.save();x.shadowColor=GLOW;x.shadowBlur=30;flapDragon(W/2-330,hy-18,72,t*FLAP*1.3);x.restore();
-  GT('Open Plugin Creator',W/2-270,hy,64,{w:500,ls:-1,glow:.6});
-  GT('STEP 1',W/2-270,hy-80,20,{f:'M',w:600,c:P.blueHi,ls:4,glow:.6});
-  chatBox(W/2-560,H*.42,1120,180,{text:'@Plugin Creator',glowTail:0,caretOn:Math.floor(t*3)%2===0});
-  let cx=W/2-420;['New chat','@Plugin Creator','Not listed? Settings → Plugins'].forEach((l,i)=>{const a=prog(lt,.15+i*.1,.35+i*.1);x.save();x.globalAlpha=a;cx+=chip(cx,H*.42+210,l)+16;x.restore();});
-  x.restore();vignette();
-});
-
-// 4.6 – 5.8 : close-up on the mention menu
-S(4.6,5.8,t=>{
-  const lt=t-4.6;bg('#000');floorGlow(t,1,H*.8);
-  x.save();cam(lerp(1.9,2.05,lt/1.2),lerp(W/2+120,W/2+60,lt/1.2),H*.42);
-  GT('Open Plugin Creator',W/2-270,H*.33,64,{w:500,ls:-1,glow:.6});
-  chatBox(W/2-560,H*.42,1120,180,{text:'@Plugin Creator',caretOn:false});
-  // menu
-  const mx=W/2-80,my=H*.42-250,mw=440;x.save();x.globalAlpha=eo(prog(lt,0,.2));
-  x.fillStyle='rgba(32,33,40,.98)';rr(mx,my,mw,236,18);x.fill();x.strokeStyle='rgba(255,255,255,.12)';x.lineWidth=1.5;x.stroke();
-  x.fillStyle='rgba(127,155,255,.16)';rr(mx+8,my+10,mw-16,74,12);x.fill();
-  T('Plugin Creator',mx+26,my+44,22,{w:600,c:'#fff'});T('Build a private plugin',mx+26,my+70,15,{c:'#9a9aa6'});
-  x.strokeStyle=P.blueHi;x.lineWidth=2.5;x.beginPath();x.moveTo(mx+mw-46,my+46);x.lineTo(mx+mw-38,my+54);x.lineTo(mx+mw-24,my+38);x.stroke();
-  T('Not in the list?',mx+26,my+130,20,{w:500,c:'#d6d6de'});T('Settings → Plugins',mx+26,my+156,15,{c:'#9a9aa6'});
-  T('Needs Plugin Creator on your account',mx+26,my+206,15,{f:'M',c:'#7d7d88'});
-  x.restore();x.restore();vignette();
-});
-
-// 5.8 – 6.5 : a streak whips through, Step 2 lands
-S(5.8,6.5,t=>{
-  const lt=t-5.8;bg('#000');floorGlow(t,.6,H*1.0);
-  streak(W*.62,H*.42,300,lt*6-1.8,1.0,11,1-prog(lt,.45,.7));
-  stepTag(2,'Give Plugin Creator the brief',W/2-260,H/2,prog(lt,.25,.45),48);
-  vignette();
-});
-
-// 6.5 – 8.6 : the brief pulls into focus; Step 3 underneath
+// ---------------------------------------------------------------- 7.18 – 8.5
+// the brief: one defocused glowing band opens into a paragraph and resolves top to bottom
 const BRIEF=[
   'Create a private ChatGPT plugin called “Adaptive Tutor”.',
-  'Purpose: personalised, one-to-one teaching that adapts to',
-  'demonstrated understanding rather than assumed knowledge.',
+  'Purpose: personalised, one-to-one teaching that adapts to demonstrated',
+  'understanding rather than assumed knowledge.',
   'I will provide the complete tutoring instructions in my next message.',
   '',
   '1. Create a skills-only plugin. No external server or custom MCP tools.',
-  '2. Preserve the full teaching workflow: goal, probing, DAGs, quizzes,',
-  '    strict marking, LaTeX practice papers and session recovery.',
-  '3. Use ChatGPT’s own diagrams, maths, source checks and files.',
-  '4. Identify tool limits and implement practical fallbacks.',
+  '2. Preserve the full workflow: goal confirmation, probing, DAGs, one concept',
+  '    at a time, quizzes, strict marking, LaTeX papers and session recovery.',
+  '3. Use ChatGPT’s own diagrams, maths, source checks and file generation.',
+  '4. Identify tool limitations and implement practical fallbacks.',
   '5. Include the original tutoring instructions as a reference file.',
-  '6. Validate the files, manifests and behaviour.',
+  '6. Validate the plugin’s files, manifests and behaviour.',
   '7. Save it privately to my ChatGPT account.',
   '8. Give me a link and explain how to activate it.',
   '',
   'Do not simplify the tutoring approach or remove constraints.',
   'Wait for my tutoring instructions before building the plugin.'];
-S(6.5,8.6,t=>{
-  const lt=t-6.5;bg('#000');floorGlow(t,.75,H*1.0);
-  if(t<7.3){const k=prog(lt,0,.8);
-    GT(BRIEF[0],W/2,H/2,lerp(46,40,k),{a:'center',w:600,blur:lerp(14,3,eo(k)),glow:1,c:'#c8d3ff'});
-    GT('Plugin Creator brief',W/2,H/2+60,22,{a:'center',f:'M',c:'#8892c8',blur:lerp(10,4,k),alpha:.6,glow:.6});
-  } else {const k=eo(prog(t,7.3,7.75));
-    x.save();cam(lerp(1.08,1,k),W/2,H*.45);
-    const k3=eo(prog(t,8.0,8.25));
-    const X0=W/2-600,Y0=170,lh=41;
-    BRIEF.forEach((l,i)=>{if(!l)return;const hot=i>=15;const a=prog(t,7.3+i*.02,7.45+i*.02);
-      GT(l,X0,Y0+i*lh,28,{w:i===0?700:400,c:hot?'#b7c6ff':'#e9ecf8',glow:hot?.9:.15,blur:lerp(5,0,k)+(hot?.6:0)+k3*8,alpha:a*(1-k3*.88)});});
-    GT('STEP 2 · COPY THIS INTO PLUGIN CREATOR',X0,Y0-54,20,{f:'M',c:P.blueHi,ls:2,alpha:k*(1-k3),glow:.5});
-    x.restore();
-    // Step 3 overlay
-    if(k3>0){
-      stepTag(3,'When it asks, paste the whole tutor prompt.',W/2-560,H/2-30,k3,52);
-      GT('The text inside every section, not just the headings.',W/2-560,H/2+100,30,{c:'#aeb8e6',alpha:k3,glow:.4});}
-  }
-  vignette();
+S(7.18,8.5,t=>{
+  bg('#000');floor(t,lerp(.25,.85,eio(prog(t,7.5,8.5))),lerp(H*1.0,H*.84,eio(prog(t,7.5,8.5))),{dip:.5,hill:.8});
+  const lh=40,sz=29,n=BRIEF.length,X0=W/2-560,cy=H/2-24,top=cy-(n*lh)/2+sz;
+  const open=eo(prog(t,7.18,7.5)),zoom=lerp(1.04,1,eo(prog(t,7.18,8.5)));
+  x.save();x.translate(W/2,H/2);x.scale(zoom,zoom);x.translate(-W/2,-H/2);
+  txt('STEP 2 · PASTE THIS INTO PLUGIN CREATOR',X0,top-58,18,{f:'M',w:600,c:[150,175,255],alpha:prog(t,7.6,7.85),ls:2});
+  BRIEF.forEach((l,i)=>{if(!l)return;const y=cy+(top+i*lh-cy)*lerp(.05,1,open);
+    const r=eo(prog(t,7.32+i*.05,7.62+i*.05));const hot=i>=15;
+    txt(l,X0,y,sz,{w:i===0?600:400,alpha:clamp(open*3)*(i===0?1:lerp(.55,1,r)),blur:(1-r)*6+(1-open)*8,
+      c:mix(ICE,hot?[178,196,255]:WHITE,r),glow:lerp(1,hot?.35:.05,r)});});
+  txt('STEP 3 · THEN PASTE THE WHOLE TUTOR PROMPT',X0,top+n*lh+30,18,{f:'M',w:600,c:[150,175,255],alpha:prog(t,8.1,8.3),ls:2});
+  x.restore();bloom();vignette(.4);
 });
 
-// 8.6 – end : title, then Step 4 and Step 5 swap in underneath
-S(8.6,99,t=>{
-  const lt=t-8.6;bg('#000');floorGlow(t,1,H*.74);
-  const tk=eo(prog(lt,0,.35));
-  font(150,600);x.letterSpacing='-5px';const w1=x.measureText('Adaptive ').width,w2=x.measureText('Tutor').width;x.letterSpacing='0px';
-  const x0=W/2-(w1+w2)/2,ty=H*.46;
-  GT('Adaptive',x0,ty,150,{w:600,ls:-5,blur:lerp(12,0,tk),alpha:tk,glow:.9,c:'#dfe6ff'});
-  const k2=eo(prog(lt,.3,.7));GT('Tutor',x0+w1,ty,150,{w:600,ls:-5,blur:lerp(14,0,k2),alpha:k2,glow:1,c:P.blueHi});
-  x.save();x.shadowColor=GLOW;x.shadowBlur=30;flapDragon(x0+w1+w2+90,ty-110,110,t*FLAP*1.3,{alpha:k2});x.restore();
-  const caps=[[9.1,'STEP 4','Open the link, enable it, then type @Adaptive Tutor in a new chat.'],
-              [9.9,'STEP 5','Test it: “I want to learn about planetary gearsets.”'],
-              [10.8,'IT WORKS IF','it sets a goal and asks how long the session is, before teaching.']];
-  caps.forEach(([a,tag,line],i)=>{const b=i<caps.length-1?caps[i+1][0]:99;const kin=eo(prog(t,a,a+.25)),kout=prog(t,b-.15,b);const al=kin*(1-kout);
-    if(al<=0)return;GT(tag,W/2,H*.62,20,{a:'center',f:'M',c:P.blueHi,ls:4,alpha:al,glow:.6,blur:(1-kin)*6});
-    GT(line,W/2,H*.62+56,36,{a:'center',w:500,alpha:al,glow:.5,blur:(1-kin)*8+kout*6});});
-  GT('Get the prompt free at mentaljineer.pages.dev',W/2,H-70,24,{a:'center',f:'M',c:'#c8d3ff',alpha:prog(t,10.9,11.2),glow:.5});
-  vignette();
+// ---------------------------------------------------------------- 8.5 – end
+// title: first word lands big and settles; the second word swaps three times
+const T1='Adaptive',TS=164;const SWAPS=[[9.0,'Quizzes'],[9.78,'Papers'],[10.62,'Tutor']];
+S(8.5,99,t=>{
+  bg('#000');floor(t,1,H*.6,{dip:.47,hill:.86});
+  const land=eo(prog(t,8.5,8.74)),sc=lerp(2.3,1,land)*lerp(1,1.035,prog(t,8.74,12));
+  const w1=tw(T1,TS,400),gap=TS*.24;
+  // animated width of the second word, so the pair stays centred through each swap
+  let w2=0,ws=SWAPS.map(s=>tw(s[1],TS,600));
+  w2=ws[0]*eo(prog(t,9.0,9.35));for(let i=1;i<SWAPS.length;i++)w2=lerp(w2,ws[i],eio(prog(t,SWAPS[i][0],SWAPS[i][0]+.4)));
+  const total=w1+(w2>0?gap+w2:0),x0=W/2-total/2,ty=H*.5;
+  x.save();x.translate(W/2,ty-TS*.3);x.scale(sc,sc);x.translate(-W/2,-(ty-TS*.3));
+  txt(T1,x0,ty,TS,{w:400,c:[226,232,255],blur:(1-land)*6,glow:lerp(.9,.32,land)});
+  SWAPS.forEach(([a,w],i)=>{const b=i<SWAPS.length-1?SWAPS[i+1][0]:99;
+    const pin=eo(prog(t,a+(i?.05:0),a+.38)),pout=eio(prog(t,b,b+.3));if(pin<=0||pout>=1)return;
+    const dy=(i?44:30)*(1-pin)-46*pout,dx=i?0:26*(1-pin);
+    txt(w,x0+w1+gap+dx,ty+dy,TS,{w:600,c:mix([120,130,170],[248,250,255],pin),alpha:pin*(1-pout),blur:(1-pin)*8+pout*8,glow:.5*pin*(1-pout)});});
+  x.restore();
+  txt('Free prompt · mentaljineer.pages.dev',W/2,H-64,22,{f:'M',w:500,a:'center',c:[225,232,255],alpha:prog(t,11.0,11.35),ls:1});
+  bloom(.9);vignette(.4);
 });
 
-function render(t){x.setTransform(1,0,0,1,0,0);x.globalAlpha=1;x.filter='none';x.letterSpacing='0px';x.setLineDash([]);x.globalCompositeOperation='source-over';
+function render(t){
+  x=cv.getContext('2d');x.setTransform(1,0,0,1,0,0);x.globalAlpha=1;x.filter='none';x.letterSpacing='0px';x.globalCompositeOperation='source-over';
+  ex.setTransform(1,0,0,1,0,0);ex.clearRect(0,0,W,H);
   for(const s of scenes){if(t>=s.a&&t<s.b){s.fn(t);break;}}}
 window.ready=(async()=>{
-  await Promise.all(['400 10px G','500 10px G','600 10px G','700 10px G','800 10px G','900 10px G','500 10px M','600 10px M'].map(f=>document.fonts.load(f)));
+  await Promise.all(['400 10px G','500 10px G','600 10px G','400 10px N','500 10px N','600 10px N','500 10px M','600 10px M'].map(f=>document.fonts.load(f)));
   await Promise.all([load('dw','assets/dragon-mark-white.svg'),load('db','assets/dragon-mark-black.svg')]);
-  buildDragonParts();render(0);return true;})();
+  buildDragonParts();layoutWord();CPATH=[...WORD].map((_,i)=>cometPath(i));buildLoop();render(0);return true;})();
 window.render=render;
 </script></body></html>

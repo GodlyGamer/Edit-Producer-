@@ -5,7 +5,7 @@ const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 
-const FPS = 30, DUR = 12.033;
+const FPS = +(process.env.FPS || 60), DUR = 12.033;
 
 (async () => {
   const browser = await chromium.launch({ args: ['--allow-file-access-from-files'] });
