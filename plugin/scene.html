@@ -263,7 +263,7 @@ const MENU=[['Plugin Creator','Builds private plugins for you'],['Adaptive Tutor
 function boxY(t){return lerp(H*1.12,H*.46,eo(prog(t,2.05,2.85)))-lerp(0,H*.06,eio(prog(t,3.15,3.6)));}
 function uiCam(t){ // scale + focus point (world coords); always in motion
   const fx=W/2+BOXW/2-150,fy=boxY(t)-90;
-  let s=lerp(1,1.05,eio(prog(t,3.4,4.2))),cx=W/2,cy=H/2;
+  let s=lerp(1,1.06,Math.pow(prog(t,3.4,4.3),1.5)),cx=W/2,cy=H/2;   // push builds into the zoom, no stall
   const z=easeQ(prog(t,4.16,4.62));s=lerp(s,2.1,z);cx=lerp(cx,fx,z);cy=lerp(cy,fy,z);
   const d=prog(t,4.4,5.75);s+=.12*d*z;cx-=70*d*z;cy+=18*d*z;          // linear drift while zoomed
   const o=eio(prog(t,5.65,6.3));s=lerp(s,1.12,o);cx=lerp(cx,W/2+30,o);cy=lerp(cy,H/2-10,o);
@@ -331,12 +331,14 @@ S(2.0,6.8,t=>{
 });
 // a single comet leaves the send button once the UI starts to defocus, loops up and round on the
 // right-hand side (clear of all text) and fades as the brief appears
-const LOOP_T0=6.35;let LOOP=null;
+const LOOP_T0=6.45;let LOOP=null;
 function buildLoop(){const c=uiCam(LOOP_T0),by=boxY(LOOP_T0),wx=W/2+BOXW/2-96+36,wy=by+BOXH-48;
   const sx=W/2+(wx-c.cx)*c.s,sy=H/2+(wy-c.cy)*c.s;
-  LOOP=tau=>{const s=Math.max(0,tau-LOOP_T0),R=lerp(140,280,clamp(s/1.0)),a=Math.PI+s*4.3;
-    const cx=sx+140+110*s,cy=sy-40-150*s;return [cx+R*Math.cos(a),cy+R*Math.sin(a)*.85];};}
-S(6.8,7.18,t=>{bg('#000');floorAt(t);comet(LOOP,t,.3,12,1-prog(t,7.05,7.3));bloom();vignette(.45);});
+  // loop up and over inside the frame, then sweep in to where the brief's first line opens
+  const R=Math.hypot(80,200),a0=Math.atan2(200,80),ccx=sx-80,ccy=sy-200,end=[W/2,H/2-24];
+  LOOP=tau=>{const s=Math.max(0,tau-LOOP_T0),a=a0-s*5.2;const p=[ccx+R*Math.cos(a)-60*s,ccy+R*Math.sin(a)*.9-40*s];
+    const k=eio(prog(s,.42,.82));return [lerp(p[0],end[0],k),lerp(p[1],end[1],k)];};}
+S(6.8,7.18,t=>{bg('#000');floorAt(t);comet(LOOP,t,.3,12,1-prog(t,7.14,7.32));bloom();vignette(.45);});
 
 // ---------------------------------------------------------------- 7.18 – 8.5
 // the brief: a defocused glowing band opens into a paragraph, resolves top to bottom, keeps drifting
@@ -360,7 +362,7 @@ const BRIEF=[
   'Wait for my tutoring instructions before building the plugin.'];
 S(7.18,8.5,t=>{
   bg('#000');floorAt(t);
-  if(t<7.3)comet(LOOP,t,.3,12,1-prog(t,7.05,7.3));
+  if(t<7.32)comet(LOOP,t,.3,12,1-prog(t,7.14,7.32));
   const lh=40,sz=29,n=BRIEF.length,X0=W/2-560,cy=H/2-24,top=cy-(n*lh)/2+sz;
   const open=eio(prog(t,7.2,7.48)),k=prog(t,7.18,8.5),zoom=lerp(1.05,1.0,k),dy=lerp(20,-22,k);
   const fin=prog(t,7.18,7.26);
@@ -381,7 +383,7 @@ S(8.5,99,t=>{
   bg('#000');floor(t,1,H*.6,{dip:.47,hill:.86});
   const land=eo(prog(t,8.5,8.9)),sc=lerp(2.3,1,land)*(1+.06*prog(t,8.5,12.1));
   const w1=tw(T1,TS,400),gap=TS*.24,ws=SWAPS.map(s=>tw(s[1],TS,600));
-  let w2=ws[0]*eio(prog(t,8.85,9.4));
+  let w2=ws[0]*(.68*eo(prog(t,8.5,8.9))+.32*eio(prog(t,8.95,9.4)));
   for(let i=1;i<SWAPS.length;i++)w2=lerp(w2,ws[i],eio(prog(t,SWAPS[i][0]-.12,SWAPS[i][0]+.3)));
   const total=w1+gap*clamp(w2/40)+w2,x0=W/2-total/2,ty=H*.5-14*prog(t,8.9,12.1);
   x.save();x.translate(W/2,ty-TS*.3);x.scale(sc,sc);x.translate(-W/2,-(ty-TS*.3));
