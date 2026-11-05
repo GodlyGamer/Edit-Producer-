@@ -186,14 +186,16 @@ function vignette(a=.55){const g=x.createRadialGradient(W/2,H/2,H*.35,W/2,H/2,H*
 // dragon fades in, letters glow in one by one while the word re-centres,
 // rings of light expand behind; then each letter peels off as a comet
 const WORD='Mentaljineer',WSZ=104,ICON=92,GAP=26;
-const LA=[...WORD].map((_,i)=>.36+i*.068);           // letter appear times
-const LD=[...WORD].map((_,i)=>1.70+i*.022);          // letter dissolve times
+const LA=[...WORD].map((_,i)=>.30+i*.055);           // letter appear times
+const LD=[...WORD].map((_,i)=>1.68+i*.04);           // letter dissolve times (one at a time, like the reference)
+const COMETS=[0,2,4,6,8,10];                          // only six letters become streaks
 let LW=null,LX=null,LY=0;
 function layoutWord(){LW=[...WORD].map(ch=>tw(ch,WSZ,500));}
 function groupCam(t){return {s:lerp(1.05,.95,eio(clamp(t/2))),dy:lerp(14,-34,eio(clamp(t/2)))};}
-const CR=rnd(91),CP=[...WORD].map(()=>({vx:(CR()-.5)*900,up:420+CR()*380,g:900+CR()*500,A:60+CR()*120,B:40+CR()*90,om:5+CR()*5,ph:CR()*6.28}));
+const CR=rnd(91),CP=[...WORD].map((_,i)=>{const k=COMETS.indexOf(i),ang=-Math.PI*(.86-.72*Math.max(0,k)/5),sp=520+CR()*220;
+  return {vx:Math.cos(ang)*sp,up:-Math.sin(ang)*sp,g:260+CR()*120,A:110+CR()*70,B:80+CR()*50,om:4.2+CR()*2,ph:CR()*6.28};});
 function letterPos(i,t){ // screen position of letter i's centre at time t (follows the group layout + camera)
-  const vis=(tt)=>ICON+GAP+LW.reduce((a,w,j)=>a+w*eo(prog(tt,LA[j],LA[j]+.32)),0);
+  const vis=(tt)=>ICON+GAP+LW.reduce((a,w,j)=>a+w*eio(prog(tt,LA[j],LA[j]+.42)),0);
   const tt=Math.min(t,LD[0]);const VW=vis(tt),left=W/2-VW/2;const c=groupCam(tt);
   let lx=left+ICON+GAP;for(let j=0;j<i;j++)lx+=LW[j];lx+=LW[i]/2;
   const X=W/2+(lx-W/2)*c.s,Y=H/2+(c.dy+(-WSZ*.33))*c.s;return [X,Y,left,c];}
@@ -203,23 +205,29 @@ function cometPath(i){const [lx,ly]=letterPos(i,LD[i]);const p=CP[i];
             ly-p.up*s+p.g*s*s*.5+p.B*(Math.cos(p.om*s+p.ph)-Math.cos(p.ph))];};}
 let CPATH=null;
 function swarm(t){ // comets born from the letters, alive until ~3.2s
-  for(let i=0;i<WORD.length;i++){if(t<LD[i])continue;
-    const al=prog(t,LD[i],LD[i]+.06)*(1-prog(t,2.75+i*.03,3.15+i*.02));comet(CPATH[i],t,.2,9,al,LD[i]);}}
+  COMETS.forEach((i,k)=>{if(t<LD[i]||t>2.8)return; // all gone before the words arrive
+    const al=prog(t,LD[i],LD[i]+.08)*(1-prog(t,2.3+k*.06,2.62+k*.03));comet(CPATH[i],t,.34,10,al,LD[i]);});}
+// ambient glow + a few thick, slow rings (the reference reads as one lit tunnel, not loose arcs)
+function introLight(t,fade){
+  const amb=prog(t,.1,1.0)*fade;
+  if(amb>0){const g=x.createRadialGradient(W/2,H/2+20,H*.18,W/2,H/2+20,H*1.05);
+    g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(.45,`rgba(28,44,150,${.32*amb})`);g.addColorStop(.75,`rgba(36,58,190,${.42*amb})`);g.addColorStop(1,`rgba(10,16,60,${.3*amb})`);
+    x.fillStyle=g;x.fillRect(0,0,W,H);}
+  [[.40,.10,2.6,2.0,.30],[.62,.30,3.2,4.1,-.22],[.86,.48,2.4,.9,.18],[1.1,.62,3.0,3.3,-.14]].forEach(([rf,ta,len,a0,sp])=>{
+    const r=H*rf*(1+.12*eio(clamp(t/2.4))),a=eio(prog(t,ta,ta+.6))*fade;
+    ringArc(W/2,H/2+20,r,a0+t*sp,len*lerp(.55,1,eio(prog(t,ta,ta+.9))),95,a);});}
 S(0,2.0,t=>{
   bg('#000');
-  // rings
-  [0,1,2,3,4].forEach(i=>{const r=(300+i*210)*(1+.10*t),a=prog(t,.15+i*.12,.7+i*.12)*(1-prog(t,1.75,2.0)*.6);
-    ringArc(W/2,H/2+20,r,2.4+i*1.7+t*(.35+i*.08)*(i%2?-1:1),1.3+(i%3)*.5,46+i*6,a*.9);
-    ringArc(W/2,H/2+20,r,5.1+i*1.3-t*(.28+i*.05),.9+(i%2)*.6,40,a*.6);});
+  introLight(t,1);
   const [,,left,c]=letterPos(0,t);
   x.save();x.translate(W/2,H/2);x.scale(c.s,c.s);x.translate(-W/2,-H/2+c.dy);
   // dragon icon
   const ia=prog(t,.08,.32)*(1-prog(t,1.6,1.78));
   if(ia>0){const pos=[left+ICON/2,H/2-WSZ*.36];
-    flapDragon(pos[0],pos[1],ICON,t*FLAP,{alpha:ia});emit(()=>flapDragon(pos[0],pos[1],ICON,t*FLAP,{alpha:ia*.5}));}
+    const ph=t*FLAP*.5;flapDragon(pos[0],pos[1],ICON,ph,{alpha:ia});emit(()=>flapDragon(pos[0],pos[1],ICON,ph,{alpha:ia*.45}));}
   // letters
   let lx=left+ICON+GAP;
-  [...WORD].forEach((ch,i)=>{const p=eo(prog(t,LA[i],LA[i]+.32)),d=prog(t,LD[i],LD[i]+.07);
+  [...WORD].forEach((ch,i)=>{const p=eio(prog(t,LA[i],LA[i]+.42)),d=eio(prog(t,LD[i],LD[i]+(COMETS.includes(i)?.07:.16)));
     const al=p*(1-d);if(al>0)txt(ch,lx,H/2,WSZ,{w:500,alpha:al,blur:(1-p)*9+d*4,c:mix(ICE,WHITE,p),glow:lerp(1,.28,p)+d});
     lx+=LW[i];});
   x.restore();
@@ -296,6 +304,7 @@ function drawUI(t){
 const UIC=mk(W,H);
 S(2.0,6.62,t=>{
   bg('#000');
+  if(t<2.5)introLight(t,1-eio(prog(t,2.0,2.5)));
   floor(t,prog(t,2.3,3.0),lerp(H*1.05,H*.76,eo(prog(t,2.3,3.2))),{dip:.48,hill:.85});
   const c=uiCam(t);const out=prog(t,6.0,6.5);
   const drawWorld=()=>{x.save();x.translate(W/2,H/2);x.scale(c.s,c.s);x.translate(-c.cx,-c.cy);drawUI(t);x.restore();};
