@@ -1,0 +1,418 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face{font-family:G;font-weight:400;src:url(assets/fonts/Geist-400.woff2)}
+@font-face{font-family:G;font-weight:500;src:url(assets/fonts/Geist-500.woff2)}
+@font-face{font-family:G;font-weight:600;src:url(assets/fonts/Geist-600.woff2)}
+@font-face{font-family:G;font-weight:700;src:url(assets/fonts/Geist-700.woff2)}
+@font-face{font-family:G;font-weight:800;src:url(assets/fonts/Geist-800.woff2)}
+@font-face{font-family:G;font-weight:900;src:url(assets/fonts/Geist-900.woff2)}
+@font-face{font-family:M;font-weight:500;src:url(assets/fonts/GeistMono-500.woff2)}
+@font-face{font-family:M;font-weight:600;src:url(assets/fonts/GeistMono-600.woff2)}
+html,body{margin:0;background:#000}canvas{display:block}
+</style></head>
+<body><canvas id="c" width="1080" height="1080"></canvas>
+<script>
+// Mentaljineer · Personalised Tutor prompt edit. render(t) draws the frame at time t (seconds).
+// Numbers: 3,601 copies (live count on mentaljineer.pages.dev/api/prompts, Nov 2026), 3,000+ users
+// and the 10,000 target are from Youssouf. Process details are quoted from the prompt itself.
+const W=1080,H=1080;
+const cv=document.getElementById('c');let x=cv.getContext('2d');
+const P={paper:'#f2f2f3',paper2:'#e6e6e8',white:'#ffffff',ink:'#0e0e0f',muted:'#58585d',rule:'#d4d4d8',
+  night:'#0b0b0c',night2:'#141416',onNight:'#f2f2f3',onNightMuted:'#9a9a9f',
+  navy:'#060a26',navy2:'#111c5a',navy3:'#24348a',ice:'#aeb8e6',blue:'#7f9bff',blueHi:'#b7c6ff',ttBlue:'#8ec5ff'};
+
+// ---------- helpers ----------
+const clamp=(v,a=0,b=1)=>Math.min(b,Math.max(a,v));
+const lerp=(a,b,k)=>a+(b-a)*k;
+const prog=(t,a,b)=>clamp((t-a)/(b-a));
+const eo=k=>1-Math.pow(1-k,3);
+const eio=k=>k<.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2;
+const eback=k=>{const c=1.7;return 1+(c+1)*Math.pow(k-1,3)+c*Math.pow(k-1,2)};
+function rnd(seed){let s=seed>>>0||1;return()=>{s^=s<<13;s^=s>>>17;s^=s<<5;return((s>>>0)%100000)/100000}}
+function bg(c){x.fillStyle=c;x.fillRect(0,0,W,H)}
+function font(size,w=500,f='G'){x.font=`${w} ${size}px ${f}`}
+function T(s,X,Y,size,{w=500,f='G',c=P.ink,a='left',alpha=1,ls=0}={}){
+  x.save();x.globalAlpha*=alpha;font(size,w,f);x.fillStyle=c;x.textAlign=a;x.textBaseline='alphabetic';
+  if(ls)x.letterSpacing=ls+'px';x.fillText(s,X,Y);x.restore();}
+const typed=(s,k)=>s.slice(0,Math.round(s.length*clamp(k)));
+function rr(X,Y,w,h,r){x.beginPath();x.roundRect(X,Y,w,h,r)}
+function grain(alpha=.05,seed=1,col='#000'){const r=rnd(seed);x.save();x.globalAlpha=alpha;x.fillStyle=col;
+  for(let i=0;i<1100;i++)x.fillRect(r()*W,r()*H,1.5,1.5);x.restore();}
+function hud(label,num,dark=false){const c=dark?P.onNightMuted:P.muted;
+  T(label,40,52,16,{f:'M',w:500,c,ls:1.5});T(num,W-40,52,16,{f:'M',w:500,c,a:'right',ls:1.5});}
+function reticle(X,Y,r,c){x.save();x.strokeStyle=c;x.lineWidth=2;x.beginPath();x.arc(X,Y,r,0,7);x.stroke();
+  x.beginPath();x.arc(X,Y,r*.45,0,7);x.stroke();x.beginPath();x.moveTo(X-r*1.3,Y);x.lineTo(X+r*1.3,Y);
+  x.moveTo(X,Y-r*1.3);x.lineTo(X,Y+r*1.3);x.stroke();x.restore();}
+function fmt(n){return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g,',')}
+
+const imgs={};
+function load(n,src){return new Promise(r=>{const i=new Image();i.onload=()=>{imgs[n]=i;r()};i.src=src})}
+function dragon(X,Y,s,{white=true,alpha=1,rot=0}={}){x.save();x.globalAlpha*=alpha;x.translate(X,Y);x.rotate(rot);
+  x.drawImage(white?imgs.dw:imgs.db,-s/2,-s/2,s,s);x.restore();}
+// glass orb (site's glass look) used as the "dot"
+function orb(X,Y,r){x.save();
+  const g=x.createRadialGradient(X-r*.3,Y-r*.35,r*.05,X,Y,r);
+  g.addColorStop(0,'#ffffff');g.addColorStop(.35,P.blueHi);g.addColorStop(1,P.navy3);
+  x.shadowColor='rgba(140,170,255,.7)';x.shadowBlur=r*.8;x.fillStyle=g;x.beginPath();x.arc(X,Y,Math.max(.01,r),0,7);x.fill();x.restore();}
+
+// navy "horizon" sky with soft glass clouds
+let cloudLayer=null;
+function makeClouds(){const c=document.createElement('canvas');c.width=W*2;c.height=H;const g=c.getContext('2d');const r=rnd(7);g.filter='blur(12px)';
+  const blob=(cx,cy,s)=>{for(let i=0;i<14;i++){const a=r()*Math.PI,d=r()*s;g.fillStyle=`rgba(200,212,255,${.18+r()*.25})`;
+    g.beginPath();g.arc(cx+Math.cos(a)*d*1.8,cy-Math.sin(a)*d*.5,s*(.35+r()*.4),0,7);g.fill();}};
+  for(let i=0;i<9;i++)blob(r()*W*2,900+r()*160,90+r()*70);for(let i=0;i<5;i++)blob(r()*W*2,200+r()*400,40+r()*40);
+  g.filter='none';cloudLayer=c;}
+const STARS=(()=>{const r=rnd(77),a=[];for(let i=0;i<140;i++)a.push([r()*W,r()*H*.75,r()]);return a})();
+function sky(drift=0,t=0){const g=x.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,P.navy);g.addColorStop(.6,P.navy2);g.addColorStop(1,'#3a4aa8');x.fillStyle=g;x.fillRect(0,0,W,H);
+  STARS.forEach(([sx,sy,s])=>{x.fillStyle=`rgba(238,241,255,${.25+.5*Math.abs(Math.sin(t*2+s*9))*s})`;x.fillRect(sx,sy,1.6+s,1.6+s);});
+  x.drawImage(cloudLayer,-(drift%W),0);}
+
+// dragon particle targets, sampled from the logo itself
+let DPTS=[];
+function sampleDragon(){const c=document.createElement('canvas');c.width=c.height=200;const g=c.getContext('2d');g.drawImage(imgs.db,0,0,200,200);
+  const d=g.getImageData(0,0,200,200).data,r=rnd(5),pts=[];
+  for(let y=0;y<200;y+=2)for(let X=0;X<200;X+=2){if(d[(y*200+X)*4+3]>128&&r()<.9)pts.push([X/200,y/200]);}
+  DPTS=pts;}
+
+// ---------- flapping dragon ----------
+// The logo is one silhouette. Cut it into body + two wings (viewBox 0..496 units) and
+// rotate each wing about its shoulder. Polygons were drawn against a gridded render of the mark.
+const WING_L=[[0,0],[300,0],[318,262],[245,302],[0,302]], PIV_L=[300,262];
+const WING_R=[[300,0],[496,0],[496,95],[395,128],[350,200],[345,224],[322,262],[318,262]], PIV_R=[328,252];
+const DPART={};
+function buildDragonParts(){
+  const R=2; // build at 992px
+  ['dw','db'].forEach(key=>{
+    const img=imgs[key];
+    const make=(poly,invert)=>{const c=document.createElement('canvas');c.width=c.height=496*R;const g=c.getContext('2d');
+      g.drawImage(img,0,0,496*R,496*R);
+      g.globalCompositeOperation=invert?'destination-out':'destination-in';
+      const path=p=>{g.beginPath();p.forEach(([a,b],i)=>i?g.lineTo(a*R,b*R):g.moveTo(a*R,b*R));g.closePath();g.fill();};
+      if(invert){path(WING_L);path(WING_R);}else path(poly);
+      return c;};
+    DPART[key]={body:make(null,true),L:make(WING_L),R:make(WING_R)};
+  });
+}
+// phase in radians; a>0 = downstroke
+// draw solid on a scratch canvas, then composite once, so overlapping parts never double up when faded
+const FLAPBUF=document.createElement('canvas');FLAPBUF.width=FLAPBUF.height=1400;
+function flapDragon(X,Y,s,phase,{white=true,alpha=1,rot=0}={}){
+  const main=x,pad=s*.2,B=Math.ceil(s+pad*2);x=FLAPBUF.getContext('2d');x.setTransform(1,0,0,1,0,0);x.clearRect(0,0,B,B);
+  flapSolid(pad+s/2,pad+s/2,s,phase,white);
+  x=main;x.save();x.globalAlpha*=alpha;x.translate(X,Y);x.rotate(rot);x.drawImage(FLAPBUF,0,0,B,B,-s/2-pad,-s/2-pad,B,B);x.restore();
+}
+function flapSolid(X,Y,s,phase,white){
+  const parts=DPART[white?'dw':'db'],u=s/496,a=Math.sin(phase);
+  x.save();x.translate(X,Y);x.translate(0,-a*s*.03);x.translate(-s/2,-s/2);
+  const wing=(img,piv,ang,sx,sy)=>{x.save();x.translate(piv[0]*u,piv[1]*u);x.rotate(ang);x.scale(sx,sy);x.translate(-piv[0]*u,-piv[1]*u);
+    x.drawImage(img,0,0,s,s);x.restore();};
+  // far wing: mostly foreshortens toward the shoulder on the downstroke
+  const fr=a>0?1-.32*a:1-.06*a;
+  wing(parts.R,PIV_R,a*.1,fr,fr);
+  x.drawImage(parts.body,0,0,s,s);
+  // near wing: swings about the shoulder and flattens a little on the downstroke
+  wing(parts.L,PIV_L,a>0?-a*.3:-a*.2,1,1-.14*Math.max(0,a));
+  // hide the joint at the shoulder
+  x.fillStyle=white?'#f2f2f3':'#0b0b0c';x.beginPath();x.arc((PIV_L[0]-4)*u,(PIV_L[1]+4)*u,24*u,0,7);x.fill();
+  x.restore();
+}
+const FLAP=7.5; // wingbeat speed (rad/s)
+
+// ---------- scenes (cut points mirror the reference edit) ----------
+const scenes=[];const S=(a,b,fn)=>scenes.push({a,b,fn});
+
+// small DAG used in several places: nodes held / to learn / goal
+const DAG={n:[[0,.15,.2,'held'],[1,.15,.55,'held'],[2,.15,.88,'held'],[3,.45,.35,'held'],[4,.45,.75,'learn'],[5,.72,.55,'learn'],[6,.92,.55,'goal']],
+  e:[[0,3],[1,3],[1,4],[2,4],[3,5],[4,5],[5,6]]};
+function drawDAG(X0,Y0,w,h,k,{dark=false,covered=-1}={}){
+  const pos=i=>[X0+DAG.n[i][1]*w,Y0+DAG.n[i][2]*h];
+  x.save();x.lineWidth=3;x.strokeStyle=dark?'rgba(238,241,255,.5)':'rgba(14,14,15,.45)';
+  DAG.e.forEach(([a,b],i)=>{const kk=clamp(k*DAG.e.length*1.2-i*.9);if(kk<=0)return;const A=pos(a),B=pos(b);
+    x.beginPath();x.moveTo(...A);x.lineTo(lerp(A[0],B[0],kk),lerp(A[1],B[1],kk));x.stroke();});
+  DAG.n.forEach(([i,,,st])=>{const kk=eback(clamp(k*DAG.n.length-i*.8));if(kk<=0)return;const [X,Y]=pos(i);
+    const held=st==='held'||i<=covered;x.save();x.translate(X,Y);x.scale(kk,kk);
+    if(st==='goal'){orb(0,0,26);}
+    else{x.fillStyle=held?P.navy3:(dark?P.night2:P.paper);x.strokeStyle=P.navy3;x.lineWidth=4;x.beginPath();x.arc(0,0,22,0,7);x.fill();x.stroke();}
+    x.restore();});
+  x.restore();
+}
+function legend(X,Y,dark){const c=dark?P.onNightMuted:P.muted;
+  [['held',P.navy3,true],['to learn',P.navy3,false],['goal',null,true]].forEach(([l,col,f],i)=>{const xx=X+i*150;
+    if(col){x.beginPath();x.arc(xx,Y-6,9,0,7);x.lineWidth=3;x.strokeStyle=col;x.fillStyle=f?col:'transparent';if(f)x.fill();x.stroke();}else orb(xx,Y-6,10);
+    T(l,xx+18,Y,17,{f:'M',c});});}
+function quizCard(X,Y,w,q,opts,pick,dark=true){ // AskUserQuestion-style card
+  x.save();x.fillStyle=dark?'#1c1c20':'#fff';rr(X,Y,w,90+opts.length*64,18);x.fill();
+  T(q,X+28,Y+52,24,{w:600,c:dark?'#fff':P.ink});
+  opts.forEach((o,i)=>{const yy=Y+80+i*64;const on=i===pick;
+    x.fillStyle=on?P.navy3:(dark?'#2a2a2f':'#f0f0f2');rr(X+24,yy,w-48,50,12);x.fill();
+    T(o,X+46,yy+33,20,{w:500,c:on?'#fff':(dark?'#ddd':P.ink),f:i===opts.length-1?'M':'G'});});
+  x.restore();}
+function paperSheet(X,Y,w,h,rot,lt){
+  x.save();x.translate(X+w/2,Y+h/2);x.rotate(rot);x.translate(-w/2,-h/2);
+  x.shadowColor='rgba(0,0,0,.18)';x.shadowBlur=36;x.shadowOffsetY=14;x.fillStyle='#fff';x.fillRect(0,0,w,h);x.shadowColor='transparent';
+  T('Practice paper',w/2,62,30,{w:700,a:'center'});
+  T('Time allowed: 40 minutes · Show your working',w/2,94,15,{f:'M',c:P.muted,a:'center'});
+  x.fillStyle=P.ink;x.fillRect(40,112,w-80,1.5);
+  const qs=[3,4,4,6,8];qs.forEach((m,i)=>{const y=150+i*Math.min(84,(h-180)/5);
+    T(`${i+1}.`,40,y,20,{w:700});for(let j=0;j<2;j++){x.fillStyle=P.rule;x.fillRect(72,y-12+j*24,(w-200)*(j?.6:1)-((i*37)%60),7);}
+    T(`[${m} marks]`,w-40,y,16,{f:'M',c:P.muted,a:'right'});});
+  x.restore();}
+
+S(0,1.8,t=>{
+  bg(P.paper);
+  x.save();font(1150,800);x.strokeStyle=P.rule;x.lineWidth=3;x.strokeText('T',150,1010);x.restore();
+  hud('MENTALJINEER — PROMPT LIBRARY','Nº 01');reticle(W-110,H-110,28,P.muted);
+  const lines=['learn at','the edge','of what','you know.'];
+  if(t<1.0){
+    lines.forEach((s,i)=>{const k=prog(t,i*.16,i*.16+.2);T(typed(s,k),70,300+i*140,124,{w:i===3?800:500,ls:-3});});
+  } else {
+    const k=prog(t,1.0,1.35);
+    lines.forEach((s,i)=>T(s,70,300+i*140,124,{w:i===3?800:500,ls:-3,alpha:1-k}));
+    [...'tutor'].forEach((ch,i)=>{const kk=eo(prog(t,1.1+i*.06,1.35+i*.06));T(ch,80-(1-kk)*30,240+i*170,170,{w:700,c:P.navy3,alpha:kk});});
+  }
+  grain(.04,3);
+});
+
+S(1.8,2.63,t=>{
+  bg(P.paper);
+  const cuts=[[1.8,'p','Probe',-60,1060],[2.08,'m','Map',-260,1060],[2.36,'q','Quiz',-40,1060]];
+  let cur=cuts[0];cuts.forEach(c=>{if(t>=c[0])cur=c});const lt=t-cur[0],s=1+lt*.35;
+  x.save();x.translate(W/2,H/2);x.scale(s,s);x.translate(-W/2,-H/2);T(cur[1],cur[3],cur[4],1500,{w:900,ls:-20});x.restore();
+  font(30,600);const tw=x.measureText(cur[2]).width;x.fillStyle=P.ink;x.fillRect(60,H-120,tw+36,52);T(cur[2],78,H-83,30,{w:600,c:P.paper});
+});
+
+S(2.63,4.4,t=>{
+  bg(P.paper);grain(.035,5);const lt=t-2.63,z=1+lt*.02;
+  x.save();x.translate(W/2,H/2);x.scale(z,z);x.translate(-W/2,-H/2);
+  T(typed('tutor',prog(lt,0,.3)),66,200,150,{w:700,ls:-5});
+  T('\\ ˈtjuː-tə \\  noun',72,262,28,{f:'M',c:P.muted,alpha:prog(lt,.25,.4)});
+  T(typed('1. someone who teaches one person at a time.',prog(lt,.4,.9)),72,340,33,{w:500});
+  T(typed('2. a free prompt on mentaljineer.pages.dev. 3,601 copies.',prog(lt,.95,1.5)),72,396,33,{w:500});
+  x.fillStyle=P.ink;x.fillRect(72,450,W*.8*eo(prog(lt,.5,1.2)),2);
+  const cols=[[['Model','Claude'],['Category','Learning'],['Version','V2'],['Copies','3,601']],
+              [['Probe','10–20 Qs'],['Step','1 new idea'],['Message','<150 words'],['Drawing','first']],
+              [['Paper','4–8 Qs'],['Time','30–45 min'],['Marks','M1 · A1'],['Resume','state block']]];
+  cols.forEach((col,ci)=>col.forEach(([a,b],i)=>{const k=prog(lt,.6+ci*.1+i*.05,.75+ci*.1+i*.05);
+    T(a,72+ci*335,510+i*48,19,{f:'M',c:P.muted,alpha:k});T(b,72+ci*335+130,510+i*48,22,{w:700,alpha:k});
+    x.save();x.globalAlpha=k*.6;x.fillStyle=P.rule;x.fillRect(72+ci*335,522+i*48,300,1.5);x.restore();}));
+  x.restore();hud('TUTOR — DEFINITION','Nº 02');
+});
+
+S(4.4,6.57,t=>{
+  bg(P.paper);
+  if(t<5.0){const k=eo(prog(t,4.4,4.65));
+    x.save();x.strokeStyle=P.rule;x.lineWidth=1.5;[430,500,570].forEach(y=>{x.beginPath();x.moveTo(60,y);x.lineTo(60+(W-120)*k,y);x.stroke();});x.restore();
+    T('Personalised',W/2,500,150,{w:800,a:'center',alpha:k,ls:-6});
+    T('Tutor',W/2,650,150,{w:800,a:'center',alpha:prog(t,4.55,4.7),ls:-6,c:P.navy3});
+  } else {
+    const words=[[5.0,'probe.'],[5.4,'teach.'],[5.8,'test.']];let cur=words[0];words.forEach(w=>{if(t>=w[0])cur=w});
+    if(cur[1]!=='test.'||t<6.05){const s=lerp(.94,1,eo(clamp((t-cur[0])/.15)));
+      x.save();x.translate(W/2,H/2);x.scale(s,s);T(cur[1],0,40,120,{w:700,a:'center',ls:-3});x.restore();}
+    else{const k=prog(t,6.05,6.3);font(120,700);x.letterSpacing='-3px';
+      const full=x.measureText('test.').width,fw=x.measureText('test').width;x.letterSpacing='0px';const x0=W/2-full/2;
+      T('test',x0,H/2+40,120,{w:700,ls:-3,alpha:1-k});
+      const dx=lerp(x0+fw+10,W/2,eio(k)),r=lerp(11,16,prog(t,6.3,6.57));
+      x.fillStyle=P.ink;x.beginPath();x.arc(dx,H/2+30-lerp(0,30,eio(k)),r,0,7);x.fill();}
+  }
+  grain(.03,9);
+});
+
+// the dot becomes the orb, the orb hatches the dragon, and it starts flapping
+S(6.57,7.57,t=>{
+  bg(P.night);const lt=t-6.57;
+  if(lt<.4){orb(W/2,H/2,lerp(16,140,eback(prog(lt,0,.3))));}
+  else{const k=prog(lt,.4,.75);orb(W/2,H/2,lerp(140,0,eio(clamp(k*1.6))));
+    flapDragon(W/2,H/2,lerp(120,560,eback(k)),lt*FLAP*1.4,{alpha:clamp(k*2)});}
+});
+
+S(7.57,9.2,t=>{
+  bg(P.paper2);grain(.04,11);
+  if(t<8.5){const lt=t-7.57;
+    x.save();x.translate(W/2,H/2);x.rotate(-.035+lt*.02);x.translate(-W/2,-H/2);
+    x.shadowColor='rgba(0,0,0,.14)';x.shadowBlur=40;x.shadowOffsetY=16;x.fillStyle=P.white;rr(130,230,820,600,22);x.fill();x.shadowColor='transparent';
+    T('Your path, as a graph',180,310,36,{w:700});T('DRAWN BEFORE ANY TEACHING',180,346,16,{f:'M',c:P.muted,ls:1});
+    drawDAG(200,390,680,340,eo(prog(lt,.05,.75)));legend(200,800,false);
+    x.restore();
+  } else {const lt=t-8.5;
+    const words='Test edges, not nodes · Draw the picture before the prose · "I don\'t know" is data · Only a correct answer moves us forward · One new named thing per step · Understanding is the structure over the facts · '.repeat(3);
+    font(17,500,'M');x.fillStyle=P.ink;const rows=16;
+    for(let r=0;r<rows;r++){const y=360+r*24,half=Math.sin(r/rows*Math.PI),w=lerp(160,560,half);
+      const st=(r*23)%90,str=words.slice(st,st+Math.floor(w/10.2)),sw=lt*1.6;
+      x.save();x.globalAlpha=1-prog(lt,.45,.7);x.translate(W/2+Math.sin(r*.6+lt*5)*40*sw-w/2+r*sw*18,y-sw*60*Math.cos(r*.3));
+      x.rotate(-sw*.25);x.fillText(str,0,0);x.restore();}
+  }
+});
+
+// particles swarm into the dragon; it comes alive and flies off flapping
+const PR=rnd(33);let PSTART=[];
+S(9.2,10.87,t=>{
+  const lt=t-9.2;sky(lt*40,t);
+  if(!PSTART.length)PSTART=DPTS.map(()=>[PR(),PR(),PR()]);
+  const k=eio(prog(lt,.1,.8)),size=640,ox=W/2-size/2+20,oy=H/2-size/2-20;
+  const fly=prog(lt,1.0,1.67),fx=eio(fly)*520,fy=-eio(fly)*170;
+  const pa=1-prog(lt,.8,.95);
+  if(pa>0){x.fillStyle=`rgba(238,241,255,${.92*pa})`;
+    DPTS.forEach((p,i)=>{const s=PSTART[i];const ang=s[0]*7+lt*2.2,rad=110+s[1]*200;
+      const sx=W/2-60+Math.cos(ang)*rad*1.45+Math.sin(lt*3+s[2]*6)*40,sy=H/2-40+Math.sin(ang*1.3)*rad*.55;
+      x.fillRect(lerp(sx,ox+p[0]*size,k),lerp(sy,oy+p[1]*size,k),3.4,3.4);});}
+  if(lt>.8){const ph=Math.max(0,lt-.95)*FLAP*1.3;flapDragon(W/2+20+fx,H/2-20+fy,size*lerp(1,.75,fly),ph,{alpha:prog(lt,.8,.95)});}
+});
+
+S(10.87,12.5,t=>{
+  const lt=t-10.87;sky(400+lt*30,t);
+  if(t<11.9){x.save();x.translate(0,lt*70);const px=W/2+40;
+    x.fillStyle=P.navy3;x.fillRect(px-70,880,140,300);x.fillStyle='#cfd6ff';x.fillRect(px-7,330,14,560);
+    x.fillStyle='#fff';x.beginPath();x.arc(px,322,13,0,7);x.fill();
+    const fw=220,fh=150;x.save();x.translate(px+7,350);x.fillStyle=P.night;x.beginPath();x.moveTo(0,0);
+    for(let i=0;i<=20;i++){const u=i/20;x.lineTo(u*fw,Math.sin(u*5-lt*9)*12*u);}
+    for(let i=20;i>=0;i--){const u=i/20;x.lineTo(u*fw,fh+Math.sin(u*5-lt*9)*12*u);}x.closePath();x.fill();x.restore();
+    flapDragon(px+7+fw/2,350+fh/2+Math.sin(2.5-lt*9)*6,130,lt*FLAP);
+    x.restore();x.drawImage(cloudLayer,-(lt*80)%W-200,90);
+  } else {
+    // one small step at a time: a staircase rising out of the clouds, dragon on the top step
+    const k=prog(t,11.9,12.5),n=10,bw=(W-160)/n;let top=null;
+    for(let i=0;i<n;i++){const h=(80+i*58)*eback(prog(k,i*.05,i*.05+.4));
+      x.fillStyle=i===n-1?P.blueHi:'#5868c9';rr(80+i*bw+3,900-h,bw-6,h+200,4);x.fill();if(i===n-1)top=[80+i*bw+bw/2,900-h];}
+    x.drawImage(cloudLayer,-200,150);
+    if(k>.55)flapDragon(top[0],top[1]-60,120,t*FLAP,{alpha:prog(k,.55,.7)});
+  }
+});
+
+S(12.5,14.0,t=>{
+  const lt=t-12.5;sky(600+lt*25,t);const word='personalised';
+  const n=Math.min(word.length,Math.floor(lt/.08)+1);
+  font(150,800);x.letterSpacing='-5px';const full=x.measureText(word).width;x.letterSpacing='0px';const x0=W/2-full/2;
+  T(word.slice(0,n),x0,H/2+60,150,{w:800,c:P.onNight,ls:-5});
+  if(n===word.length){x.letterSpacing='-5px';font(150,800);const pre=x.measureText('personal').width,iw=x.measureText('i').width;x.letterSpacing='0px';
+    const cx=x0+pre+iw/2-3,cy=H/2-50,k=prog(lt,.95,1.5);
+    x.save();x.beginPath();x.arc(cx,cy,24,0,7);x.clip();sky(600+lt*25,t);x.restore();
+    orb(cx,cy-Math.abs(Math.sin(k*Math.PI*2))*90*(1-k),lerp(13,19,eback(prog(lt,.95,1.1))));}
+});
+
+S(14.0,15.0,t=>{
+  bg('#e9e9ec');grain(.05,13);
+  if(t<14.5){T('Personalised Tutor',W/2,H/2+20,110,{w:800,a:'center',ls:-4});T('V2 · INTEGRATED PAPERS',W/2,H/2+90,22,{f:'M',c:P.muted,a:'center',ls:2});}
+  else{const k=t-14.5;
+    [0,1,2].forEach(i=>{const kk=eback(prog(k,i*.07,.2+i*.07)),cx=W/2-170+i*170,cy=H/2;
+      x.save();x.translate(cx,cy);x.scale(kk,kk);
+      if(i===0){x.fillStyle=P.ink;rr(-50,-50,100,100,24);x.fill();T('?',0,26,74,{w:800,c:'#fff',a:'center'});}
+      if(i===1){x.strokeStyle=P.navy3;x.lineWidth=6;x.beginPath();x.moveTo(-40,-30);x.lineTo(10,0);x.lineTo(-40,30);x.moveTo(10,0);x.lineTo(44,0);x.stroke();
+        [[-40,-30],[-40,30],[10,0]].forEach(p=>{x.fillStyle=P.navy3;x.beginPath();x.arc(...p,12,0,7);x.fill();});orb(46,0,13);}
+      if(i===2){x.fillStyle='#fff';x.strokeStyle=P.ink;x.lineWidth=4;x.fillRect(-40,-52,80,104);x.strokeRect(-40,-52,80,104);
+        for(let j=0;j<4;j++){x.fillStyle=P.rule;x.fillRect(-26,-32+j*20,52-j*8,6);}T('A1',22,44,20,{w:800,c:'#b3261e',a:'center'});}
+      x.restore();});}
+});
+
+// counter: copies of the prompt, then the 10,000 target
+const GR=rnd(41),GRID=[];for(let r=0;r<10;r++)for(let c=0;c<14;c++){const dx=c-6.5,dy=r-4.5;GRID.push({r,c,d:Math.hypot(dx*.9,dy)+GR()*2.2})}
+S(15.0,16.63,t=>{
+  bg(P.paper);const lt=t-15.0,k=eo(prog(lt,0,1.0)),fin=lt>1.0;
+  const label=fmt(lerp(0,3601,k));
+  font(130,800);x.letterSpacing='-4px';const tw=x.measureText(label).width;x.letterSpacing='0px';
+  if(fin){x.fillStyle=P.blueHi;x.fillRect(62,92,tw+36,140);}
+  T(label,78,210,130,{w:800,ls:-4});T('COPIES OF THE TUTOR PROMPT · 3,000+ PEOPLE',80,268,19,{f:'M',c:P.muted,ls:1.5});
+  if(fin)T('→ 10,000',W-80,200,64,{w:800,a:'right',c:P.navy3,alpha:prog(lt,1.0,1.15)});
+  const gx=120,gy=320,cs=60;x.strokeStyle=P.rule;x.lineWidth=2;
+  for(let r=0;r<=10;r++){x.beginPath();x.moveTo(gx,gy+r*cs);x.lineTo(gx+14*cs,gy+r*cs);x.stroke();}
+  for(let c=0;c<=14;c++){x.beginPath();x.moveTo(gx+c*cs,gy);x.lineTo(gx+c*cs,gy+10*cs);x.stroke();}
+  // filled share = 3,601 of the 10,000 target
+  const reach=k*Math.sqrt(.36)*9.5;
+  GRID.forEach(g=>{if(g.d<reach){x.fillStyle=g.d<reach-2.2?P.navy3:P.blue;x.fillRect(gx+g.c*cs+3,gy+g.r*cs+3,cs-6,cs-6);}});
+  if(fin){const kk=prog(lt,1.1,1.6);GRID.forEach(g=>{if(g.d>=reach&&kk>0){x.save();x.globalAlpha=.35*kk;x.strokeStyle=P.navy3;x.lineWidth=2;x.setLineDash([5,5]);
+    x.strokeRect(gx+g.c*cs+8,gy+g.r*cs+8,cs-16,cs-16);x.restore();}});}
+  flapDragon(gx+7*cs,gy+5*cs,lerp(120,240,k),t*FLAP,{white:false});
+});
+
+// split: a probe question | the practice paper
+S(16.63,17.47,t=>{
+  const lt=t-16.63;bg(P.night);
+  x.fillStyle='#141416';x.fillRect(0,0,W/2,H);
+  T('PROBE · ONE QUESTION AT A TIME',30,90,15,{f:'M',c:P.onNightMuted,ls:1});
+  quizCard(30,140,W/2-60,'Which force keeps it moving?',['Gravity','Friction','Its velocity',"I don't know"],lt>.45?3:-1);
+  T('"I don\'t know" is data.',W/4,H-120,28,{w:600,c:'#fff',a:'center',alpha:prog(lt,.5,.65)});
+  x.fillStyle='#dcdce0';x.fillRect(W/2,0,W/2,H);
+  paperSheet(W/2+50,150+lerp(40,0,eo(prog(lt,0,.4))),W/2-100,640,.03,lt);
+  T('SET AT THE END OF EVERY SESSION',W/2+30,H-40,15,{f:'M',c:P.muted,ls:1});
+});
+
+// 10–20 questions → the one next step
+const DR=rnd(55),DOTS=[];for(let i=0;i<20;i++)DOTS.push({sx:200+DR()*680,sy:240+DR()*600,gx:i%5,gy:Math.floor(i/5)});
+S(17.47,19.1,t=>{
+  bg(P.paper);const lt=t-17.47,k1=eio(prog(lt,0,.5)),k2=eio(prog(lt,.85,1.4)),gx0=W/2-100,gy0=H/2-90;
+  DOTS.forEach(d=>{let X=lerp(d.sx,gx0+d.gx*50,k1),Y=lerp(d.sy,gy0+d.gy*60,k1);X=lerp(X,W/2+170,k2);Y=lerp(Y,H/2,k2);
+    x.fillStyle=P.navy3;x.beginPath();x.arc(X,Y,lerp(16,8,k2),0,7);x.fill();T('?',X,Y+6,lerp(18,0,k2),{w:800,c:'#fff',a:'center'});});
+  T('20 questions',W/2-150,H/2+12,36,{w:500,a:'right',alpha:prog(lt,.3,.5)});
+  if(k2>.98)orb(W/2+170,H/2,24);
+  T('1 next step',W-70,H/2+12,36,{w:700,a:'right',alpha:prog(lt,.2,.4)});
+  hud('PROBE · MAP · TEACH · QUIZ · PAPER','Nº 03');
+});
+
+// ---- 19.1 – 25.0 : how one session goes ----
+function step(label,cap,num,dark,draw){return(t,lt)=>{draw(lt);const c=dark?P.onNight:P.ink,m=dark?P.onNightMuted:P.muted;
+  T('HOW ONE SESSION GOES',40,52,16,{f:'M',c:m,ls:1.5});T(num,W-40,52,16,{f:'M',c:m,a:'right',ls:1.5});
+  T(label,40,H-90,60,{w:500,c,ls:-1});T(cap,42,H-48,17,{f:'M',c:m,ls:1.5});};}
+const Sbrief=step('Step 0','SETTLE THE BRIEF · GOAL, BACKGROUND, TIME','Nº 04',false,lt=>{
+  bg('#ecebe6');grain(.06,17);x.save();x.translate(W/2,H/2-70);x.rotate(-.04+lt*.04);
+  x.shadowColor='rgba(0,0,0,.12)';x.shadowBlur=30;x.fillStyle='#fff';rr(-300,-230,600,420,16);x.fill();x.shadowColor='transparent';
+  T('<about_me>',-260,-170,24,{f:'M',c:P.navy3});
+  [['Name','{{your name}}'],['Background','{{your level}}'],['Why I\'m learning','{{why}}'],['What helps me','{{what helps}}']].forEach(([a,b],i)=>{
+    T('- '+a+':',-260,-115+i*58,22,{w:600});font(22,600);const lw=x.measureText('- '+a+':').width;T(typed(b,prog(lt,.1+i*.12,.3+i*.12)),-260+lw+16,-115+i*58,20,{f:'M',c:P.muted});});
+  T('</about_me>',-260,150,24,{f:'M',c:P.navy3});x.restore();});
+const Sprobe=step('Step 1','PROBE · 10–20 QUESTIONS, NO TEACHING YET','Nº 05',true,lt=>{
+  bg('#17171a');quizCard(190,230,700,'What does a free-body diagram show?',['Every force on one body','Its velocity over time','Its energy',"I don't know"],lt>.4?0:-1);});
+const Smap=step('Step 2','MAP THE PATH AS A DAG','Nº 06',true,lt=>{
+  bg(P.navy);x.strokeStyle='rgba(174,184,230,.12)';x.lineWidth=1;for(let i=0;i<W;i+=40){x.beginPath();x.moveTo(i,0);x.lineTo(i,H);x.stroke();x.beginPath();x.moveTo(0,i);x.lineTo(W,i);x.stroke();}
+  drawDAG(130,200,820,560,eo(prog(lt,0,.6)),{dark:true});legend(130,830,true);});
+const Steach=step('Step 3','ONE NEW IDEA · UNDER 150 WORDS','Nº 07',false,lt=>{
+  bg('#e6e6e8');T('1',W/2,H/2+60,360,{w:900,a:'center',ls:-10});T('new idea',W/2,H/2+140,44,{w:500,a:'center',c:P.muted});});
+const Sdraw=step('Step 3','DRAW THE PICTURE BEFORE THE PROSE','Nº 08',false,lt=>{
+  bg('#fff');const k=eo(prog(lt,0,.3));x.strokeStyle=P.ink;x.lineWidth=5;x.strokeRect(W/2-90,H/2-90,180,180);
+  const arrow=(x1,y1,x2,y2,c)=>{x.strokeStyle=c;x.fillStyle=c;x.lineWidth=6;x.beginPath();x.moveTo(x1,y1);x.lineTo(x2,y2);x.stroke();
+    const a=Math.atan2(y2-y1,x2-x1);x.beginPath();x.moveTo(x2,y2);x.lineTo(x2-22*Math.cos(a-.4),y2-22*Math.sin(a-.4));x.lineTo(x2-22*Math.cos(a+.4),y2-22*Math.sin(a+.4));x.fill();};
+  arrow(W/2,H/2,W/2,H/2+220*k,P.navy3);arrow(W/2,H/2,W/2,H/2-220*k,P.navy3);arrow(W/2,H/2,W/2+260*k,H/2,'#b3261e');
+  T('W',W/2+20,H/2+220,28,{w:700,c:P.navy3,alpha:k});T('N',W/2+20,H/2-200,28,{w:700,c:P.navy3,alpha:k});T('F',W/2+250,H/2-20,28,{w:700,c:'#b3261e',alpha:k});});
+const Squiz=step('Step 4','QUIZ THE EDGES, NOT THE NODES','Nº 09',true,lt=>{
+  bg(P.night);const k=eback(prog(lt,0,.25));x.save();x.translate(W/2,H/2-40);x.scale(k,k);
+  x.strokeStyle=P.blueHi;x.lineWidth=28;x.lineCap='round';x.lineJoin='round';x.beginPath();x.moveTo(-130,0);x.lineTo(-40,90);x.lineTo(150,-110);x.stroke();x.restore();});
+const Sparent=step('Wrong?','FIND THE MISSING PARENT · TEACH THAT FIRST','Nº 10',false,lt=>{
+  bg(P.paper);const k=eback(prog(lt,.05,.3));
+  x.strokeStyle=P.muted;x.lineWidth=4;x.beginPath();x.moveTo(W/2-250,H/2);x.lineTo(W/2+250,H/2);x.stroke();
+  x.fillStyle=P.navy3;x.beginPath();x.arc(W/2-250,H/2,34,0,7);x.fill();
+  x.fillStyle=P.paper;x.strokeStyle=P.navy3;x.lineWidth=5;x.beginPath();x.arc(W/2+250,H/2,34,0,7);x.fill();x.stroke();
+  x.save();x.translate(W/2,H/2);x.scale(k,k);x.fillStyle='#b3261e';x.beginPath();x.arc(0,0,40,0,7);x.fill();T('+',0,18,56,{w:800,c:'#fff',a:'center'});x.restore();});
+const Spaper=step('Step 5','A PRACTICE PAPER IN LATEX · 4–8 QUESTIONS','Nº 11',false,lt=>{
+  bg('#dcdce0');paperSheet(W/2-260,110,520,700,-.03+lt*.04,lt);});
+const Smark=step('Marking','M1 · A1 · CONCEPT, METHOD, SLIP, MISREAD, TIME','Nº 12',false,lt=>{
+  bg('#fff');[['M1',220],['A1',420],['M1',620]].forEach(([s,y],i)=>{const k=prog(lt,i*.08,i*.08+.12);
+    for(let j=0;j<3;j++){x.fillStyle=P.rule;x.fillRect(120,y-30+j*26,520-j*90,8);}
+    T(s,W-200,y,72,{w:800,c:'#b3261e',alpha:k});});});
+const Sstate=step('Step 6','A STATE BLOCK · PICK UP NEXT SESSION','Nº 13',true,lt=>{
+  bg(P.night2);x.fillStyle='#0b0b0c';rr(140,180,800,560,18);x.fill();
+  ['goal: …','held: 4 nodes','next node: …','last paper: not yet sat','weak edges: …'].forEach((s,i)=>T(typed(s,prog(lt,i*.06,i*.06+.12)),190,270+i*90,32,{f:'M',c:i===2?P.blueHi:'#ddd'}));});
+const STEPS=[[19.1,Sbrief],[19.93,Sprobe],[20.73,Smap],[21.57,Steach],[21.97,Sdraw],[22.4,Squiz],[22.8,Sparent],[23.23,Spaper],[24.03,Smark],[24.47,Sstate]];
+S(19.1,24.93,t=>{let cur=STEPS[0];STEPS.forEach(h=>{if(t>=h[0])cur=h});cur[1](t,t-cur[0]);});
+const FLICK=[Smap,Sprobe,Sdraw,Spaper,Squiz,Sbrief,Smark,Sstate];
+S(24.93,25.5,t=>{FLICK[Math.floor((t-24.93)*15)%FLICK.length](t,.5);});
+
+// end card: flapping dragon, the numbers, where to get it
+S(25.5,99,t=>{
+  const lt=t-25.5;bg(P.navy);
+  const g=x.createRadialGradient(W/2,H/2-80,20,W/2,H/2-80,640);g.addColorStop(0,'rgba(140,170,255,.35)');g.addColorStop(1,'rgba(6,10,38,0)');x.fillStyle=g;x.fillRect(0,0,W,H);
+  grain(.06,31,'#fff');
+  const k=eo(prog(lt,0,.35));
+  flapDragon(W/2,H/2-210+Math.sin(t*FLAP)*-6,lerp(120,300,eback(k)),t*FLAP,{alpha:k});
+  T('Personalised Tutor',W/2,H/2+60,96,{w:800,c:P.onNight,a:'center',alpha:k,ls:-4});
+  T('3,000+ people use it. 10,000 next.',W/2,H/2+140,38,{w:400,c:P.ice,a:'center',alpha:prog(lt,.3,.6)});
+  T('Free · mentaljineer.pages.dev · @mentaljineer',W/2,H-80,20,{f:'M',c:P.ice,a:'center',ls:1,alpha:prog(lt,.5,.8)});
+});
+
+function render(t){x.setTransform(1,0,0,1,0,0);x.globalAlpha=1;x.filter='none';x.letterSpacing='0px';x.setLineDash([]);
+  for(const s of scenes){if(t>=s.a&&t<s.b){s.fn(t);break;}}}
+window.ready=(async()=>{
+  await Promise.all(['400 10px G','500 10px G','600 10px G','700 10px G','800 10px G','900 10px G','500 10px M','600 10px M'].map(f=>document.fonts.load(f)));
+  await Promise.all([load('dw','assets/dragon-mark-white.svg'),load('db','assets/dragon-mark-black.svg')]);
+  makeClouds();sampleDragon();buildDragonParts();render(0);return true;})();
+window.render=render;
+</script></body></html>
