@@ -1,0 +1,567 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face{font-family:B;font-weight:400;src:url(assets/fonts/Barlow-400-latin.woff2)}
+@font-face{font-family:B;font-weight:500;src:url(assets/fonts/Barlow-500-latin.woff2)}
+@font-face{font-family:B;font-weight:600;src:url(assets/fonts/Barlow-600-latin.woff2)}
+@font-face{font-family:B;font-weight:700;src:url(assets/fonts/Barlow-700-latin.woff2)}
+@font-face{font-family:C;font-weight:700;src:url(assets/fonts/BarlowCondensed-700-latin.woff2)}
+@font-face{font-family:C;font-weight:800;src:url(assets/fonts/BarlowCondensed-800-latin.woff2)}
+html,body{margin:0;background:#000}
+canvas{display:block}
+</style></head>
+<body><canvas id="c" width="1080" height="1080"></canvas>
+<script>
+// Sagittal Tennis brand edit. render(t) draws frame at time t (seconds).
+const W = 1080, H = 1080;
+const cv = document.getElementById('c'), x = cv.getContext('2d');
+const P = { paper:'#f3f4ef', paper2:'#e8eae3', surface:'#ffffff', ink:'#111513', muted:'#59605c',
+  rule:'#d6dad2', accent:'#2e5e4e', soft:'#e1eae5', ball:'#ddf24c', night:'#0e1311', night2:'#18201c',
+  onNight:'#f3f4ef', onNightMuted:'#a7b0ab', logoBg:'#1b1e20' };
+
+// ---------- helpers ----------
+const clamp = (v,a=0,b=1)=>Math.min(b,Math.max(a,v));
+const lerp = (a,b,k)=>a+(b-a)*k;
+const prog = (t,a,b)=>clamp((t-a)/(b-a));
+const eo = k=>1-Math.pow(1-k,3);            // ease out cubic
+const eio = k=>k<.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2;
+const eback = k=>{const c=1.7;return 1+(c+1)*Math.pow(k-1,3)+c*Math.pow(k-1,2)};
+function rnd(seed){let s=seed>>>0||1;return()=>{s^=s<<13;s^=s>>>17;s^=s<<5;return((s>>>0)%100000)/100000}}
+function bg(c){x.fillStyle=c;x.fillRect(0,0,W,H)}
+function font(size,w=500,f='B'){x.font=`${w} ${size}px ${f}`}
+function T(s,X,Y,size,{w=500,f='B',c=P.ink,a='left',b='alphabetic',alpha=1,ls=0}={}){
+  x.save();x.globalAlpha*=alpha;font(size,w,f);x.fillStyle=c;x.textAlign=a;x.textBaseline=b;
+  if(ls){x.letterSpacing=ls+'px'}
+  x.fillText(s,X,Y);x.restore();
+}
+function typed(s,k){return s.slice(0,Math.round(s.length*clamp(k)))}
+function rr(X,Y,w,h,r){x.beginPath();x.roundRect(X,Y,w,h,r)}
+function grain(alpha=.05,seed=1){ // subtle paper grain
+  const r=rnd(seed);x.save();x.globalAlpha=alpha;x.fillStyle='#000';
+  for(let i=0;i<900;i++){x.fillRect(r()*W,r()*H,1.5,1.5)}x.restore();
+}
+// HUD like the reference: small header label + number, corner mark
+function hud(label,num,dark=false){
+  const c=dark?P.onNightMuted:P.muted;
+  T(label,40,52,17,{f:'C',w:700,c,ls:2});
+  T(num,W-40,52,17,{f:'C',w:700,c,a:'right',ls:2});
+}
+function crosshair(X,Y,r,c){x.save();x.strokeStyle=c;x.lineWidth=2;
+  x.beginPath();x.arc(X,Y,r,0,7);x.stroke();x.beginPath();x.arc(X,Y,r*.45,0,7);x.stroke();
+  x.beginPath();x.moveTo(X-r*1.3,Y);x.lineTo(X+r*1.3,Y);x.moveTo(X,Y-r*1.3);x.lineTo(X,Y+r*1.3);x.stroke();x.restore();}
+
+// tennis ball with seam
+function ball(X,Y,r,rot=0,col=P.ball){
+  r=Math.max(0.01,r);
+  x.save();x.translate(X,Y);
+  const g=x.createRadialGradient(-r*.35,-r*.35,r*.1,0,0,r);
+  g.addColorStop(0,'#f1fb9a');g.addColorStop(.7,col);g.addColorStop(1,'#a9bb26');
+  x.fillStyle=g;x.beginPath();x.arc(0,0,r,0,7);x.fill();
+  x.clip();x.rotate(rot);x.strokeStyle='rgba(255,255,255,.9)';x.lineWidth=r*.09;
+  x.beginPath();x.arc(-r*1.25,0,r*.85,-1.1,1.1);x.stroke();
+  x.beginPath();x.arc(r*1.25,0,r*.85,Math.PI-1.1,Math.PI+1.1);x.stroke();
+  x.restore();
+}
+// brand logo (from favicon.svg: dark rounded square, ball, baseline)
+function logo(X,Y,s,k=1){ // s = size px, k = build progress
+  x.save();x.translate(X,Y);const u=s/64;
+  x.globalAlpha=clamp(k*3);
+  x.fillStyle=P.logoBg;rr(0,0,64*u,64*u,14*u);x.fill();
+  x.globalAlpha=1;
+  const kb=eback(prog(k,.2,.7));
+  x.fillStyle=P.ball;x.beginPath();x.arc(38*u,24*u,Math.max(0,10*u*kb),0,7);x.fill();
+  const kl=eo(prog(k,.5,1));
+  x.fillStyle='#eef0ec';rr(12*u,44*u,40*u*kl,5*u,u);x.fill();
+  x.restore();
+}
+
+// skeleton from the site hero (shot-3.jpg 720x710 coords)
+const SK = {head:[352,112],sh:[345,185],el:[435,233],wr:[510,187],hipL:[345,393],hipR:[372,393],
+  kL:[296,515],aL:[178,598],tL:[176,665],kR:[410,505],aR:[425,630],tR:[480,680]};
+const SKL=[['sh','el'],['el','wr'],['sh','hipL'],['sh','hipR'],['hipL','hipR'],['hipL','kL'],['kL','aL'],['aL','tL'],['hipR','kR'],['kR','aR'],['aR','tR']];
+function skel(ox,oy,sc,{c='#fff',jc=P.ball,lw=6,k=1,joints=true}={}){
+  x.save();x.lineCap='round';x.strokeStyle=c;x.lineWidth=lw;
+  const p=n=>[ox+(SK[n][0]-350)*sc,oy+(SK[n][1]-400)*sc];
+  SKL.forEach(([a,b],i)=>{const kk=clamp(k*SKL.length-i);if(kk<=0)return;
+    const A=p(a),B=p(b);x.beginPath();x.moveTo(...A);x.lineTo(A[0]+(B[0]-A[0])*kk,A[1]+(B[1]-A[1])*kk);x.stroke();});
+  if(joints){x.fillStyle=jc;Object.keys(SK).forEach(n=>{if(n==='head')return;const A=p(n);x.beginPath();x.arc(A[0],A[1],lw*.95,0,7);x.fill();})}
+  x.restore();
+}
+function skelPoints(n,seed){const r=rnd(seed),pts=[];
+  for(let i=0;i<n;i++){const [a,b]=SKL[Math.floor(r()*SKL.length)];const k=r();
+    pts.push([lerp(SK[a][0],SK[b][0],k),lerp(SK[a][1],SK[b][1],k)]);}
+  // head ring
+  for(let i=0;i<n*.12;i++){const ang=r()*7;pts.push([SK.head[0]+Math.cos(ang)*38,SK.head[1]+Math.sin(ang)*44]);}
+  return pts;}
+
+// soft clouds on pastel court-green sky
+let cloudLayer=null;
+function makeClouds(){
+  const c=document.createElement('canvas');c.width=W*2;c.height=H;const g=c.getContext('2d');
+  const r=rnd(7);g.filter='blur(10px)';
+  const blob=(cx,cy,s)=>{for(let i=0;i<14;i++){const a=r()*Math.PI,d=r()*s;
+    g.fillStyle=`rgba(255,255,255,${.55+r()*.4})`;g.beginPath();g.arc(cx+Math.cos(a)*d*1.8,cy-Math.sin(a)*d*.5,s*(.35+r()*.4),0,7);g.fill();}};
+  for(let i=0;i<9;i++)blob(r()*W*2,880+r()*160,90+r()*70);
+  for(let i=0;i<5;i++)blob(r()*W*2,180+r()*420,40+r()*40);
+  g.filter='none';cloudLayer=c;
+}
+function sky(drift=0){
+  const g=x.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#9fb9ad');g.addColorStop(.55,'#d8e3dc');g.addColorStop(1,'#f0ece2');
+  x.fillStyle=g;x.fillRect(0,0,W,H);
+  x.drawImage(cloudLayer,-((drift)%W),0);
+}
+
+const imgs={};
+function load(name,src){return new Promise(r=>{const i=new Image();i.onload=()=>{imgs[name]=i;r()};i.src=src})}
+
+// ---------- scenes ----------
+// timings mirror the cut points of the reference edit
+const scenes=[];
+const S=(a,b,fn)=>scenes.push({a,b,fn});
+
+// 0 – 1.0 : "find the one fix" typed on paper, ghost S behind
+S(0,1.8,(t)=>{
+  bg(P.paper);
+  x.save();x.globalAlpha=.9;font(1200,800,'C');x.strokeStyle=P.rule;x.lineWidth=3;x.strokeText('S',150,1080);x.restore();
+  hud('SAGITTAL — SWING ANALYSIS','Nº 01');
+  crosshair(W-110,H-110,28,P.muted);
+  const lines=['find','the','one','fix.'];
+  if(t<1.0){
+    lines.forEach((s,i)=>{const k=prog(t,i*.17,i*.17+.18);
+      T(typed(s,k),70,330+i*150,150,{w:i===3?700:500});});
+    // weight specimen column, like the reference
+    const ws=[['Regular',400],['Medium',500],['Semibold',600],['Bold',700]];
+    ws.forEach(([s,w],i)=>{const k=prog(t,.45+i*.08,.55+i*.08);T(s,640,330+i*70,38,{w,alpha:k,c:P.ink});});
+  } else {
+    const k=prog(t,1.0,1.35);
+    lines.forEach((s,i)=>{T(s,70,330+i*150,150,{w:i===3?700:500,alpha:1-k,c:i===3?P.accent:P.ink});});
+    const word='swing';
+    [...word].forEach((ch,i)=>{const kk=eo(prog(t,1.15+i*.06,1.4+i*.06));
+      T(ch,70+(1-kk)*-30,250+i*170,170,{w:600,c:P.accent,alpha:kk});});
+  }
+  grain(.04,3);
+});
+
+// 1.8 – 2.63 : giant cropped letterforms with stroke labels
+S(1.8,2.63,(t)=>{
+  bg(P.paper);
+  const cuts=[[1.8,'S','Forehand',-80,1380],[2.08,'w','Backhand',-260,1180],[2.36,'g','Serve',-120,1000]];
+  let cur=cuts[0];cuts.forEach(c=>{if(t>=c[0])cur=c});
+  const lt=t-cur[0];const s=1+lt*.35;
+  x.save();x.translate(W/2,H/2);x.scale(s,s);x.translate(-W/2,-H/2);
+  T(cur[1],cur[3],cur[4],1500,{f:'C',w:800,c:P.ink});x.restore();
+  // label tag
+  font(30,600);const tw=x.measureText(cur[2]).width;
+  x.fillStyle=P.ink;x.fillRect(60,H-120,tw+36,52);
+  T(cur[2],78,H-83,30,{w:600,c:P.paper});
+  ball(60+tw+70,H-94,16,lt*6);
+});
+
+// 2.63 – 4.4 : dictionary entry
+S(2.63,4.4,(t)=>{
+  bg(P.paper);grain(.035,5);
+  const lt=t-2.63;
+  const zoom=1+lt*.02;x.save();x.translate(W/2,H/2);x.scale(zoom,zoom);x.translate(-W/2,-H/2);
+  T(typed('sagittal',prog(lt,0,.35)),70,200,170,{w:700,f:'C',ls:-2});
+  T('\\ ˈsa-jə-tᵊl \\  adjective',74,270,30,{w:400,c:P.muted,alpha:prog(lt,.3,.45)});
+  T(typed('1. dividing the body into left and right halves.',prog(lt,.45,.95)),74,350,36,{w:500});
+  T(typed('2. a free, research-based tennis swing analysis.',prog(lt,1.05,1.55)),74,410,36,{w:500});
+  // rule
+  x.fillStyle=P.ink;x.fillRect(74,470,W*.78*eo(prog(lt,.5,1.2)),2);
+  // small columns of real metric names
+  const cols=[['Swing Score','Balance','Stance Width','Load & Hold'],['Head Stability','Technique Consistency','Contact point','Weight transfer'],['Front leg at contact','Take-back height','Your one fix','Try this next']];
+  cols.forEach((col,ci)=>col.forEach((s,i)=>{const k=prog(lt,.6+ci*.1+i*.05,.75+ci*.1+i*.05);
+    T(s,74+ci*310,530+i*40,22,{w:600,f:'C',c:P.ink,alpha:k,ls:.5});
+    x.save();x.globalAlpha=k*.35;x.fillStyle=P.muted;x.fillRect(74+ci*310,540+i*40,180+((i*37+ci*53)%90),3);x.restore();}));
+  x.restore();
+  hud('SAGITTAL — DEFINITION','Nº 02');
+});
+
+// 4.4 – 6.57 : wordmark, then film. / upload. / fix. → dot
+S(4.4,6.57,(t)=>{
+  bg(P.paper);
+  if(t<5.0){
+    const k=eo(prog(t,4.4,4.65));
+    // construction guides
+    x.save();x.strokeStyle=P.rule;x.lineWidth=1.5;
+    [470,540,610].forEach(y=>{x.beginPath();x.moveTo(60,y);x.lineTo(60+(W-120)*k,y);x.stroke();});
+    x.beginPath();x.arc(W/2+190,470,46,0,7*k);x.stroke();x.restore();
+    T('sagittal',W/2,610,220,{f:'C',w:800,a:'center',alpha:k});
+  } else {
+    const words=[[5.0,'film.'],[5.4,'upload.'],[5.8,'fix.']];
+    let cur=words[0];words.forEach(w=>{if(t>=w[0])cur=w});
+    const lt=t-cur[0];
+    if(cur[1]!=='fix.'||t<6.05){
+      const s=lerp(.94,1,eo(clamp(lt/.15)));
+      x.save();x.translate(W/2,H/2);x.scale(s,s);
+      T(cur[1],0,40,120,{w:700,a:'center'});x.restore();
+    } else {
+      // "fix." melts away, its period becomes a dot that grows
+      const k=prog(t,6.05,6.3);
+      font(120,700);const full=x.measureText('fix.').width,fw=x.measureText('fix').width;
+      const x0=W/2-full/2;
+      T('fix',x0,H/2+40,120,{w:700,alpha:1-k,c:k>0?P.muted:P.ink});
+      const dx=lerp(x0+fw+12,W/2,eio(k)),r=lerp(11,16,prog(t,6.3,6.57));
+      x.fillStyle=P.ink;x.beginPath();x.arc(dx,H/2+30-lerp(0,30,eio(k)),r,0,7);x.fill();
+    }
+  }
+  grain(.03,9);
+});
+
+// 6.57 – 7.57 : night. dot becomes the ball, ball becomes the logo
+S(6.57,7.57,(t)=>{
+  bg(P.night);
+  const lt=t-6.57;
+  if(lt<.45){
+    const r=lerp(16,150,eback(prog(lt,0,.3)));
+    ball(W/2,H/2,r,lt*9);
+  } else {
+    const k=prog(lt,.45,.9);
+    const s=lerp(300,420,eo(k));
+    // ball travels into its slot in the logo
+    logo(W/2-s/2,H/2-s/2,s,k);
+    if(k<.35){ball(W/2,H/2,lerp(150,0,k/.35),lt*9)}
+  }
+});
+
+// 7.57 – 9.2 : progress chart card, then report text swirl
+S(7.57,9.2,(t)=>{
+  bg(P.paper2);grain(.04,11);
+  if(t<8.5){
+    const lt=t-7.57;
+    x.save();x.translate(W/2,H/2);x.rotate(-.04+lt*.02);x.translate(-W/2,-H/2);
+    x.shadowColor='rgba(0,0,0,.12)';x.shadowBlur=40;x.shadowOffsetY=16;
+    x.fillStyle=P.surface;rr(150,220,780,620,18);x.fill();x.shadowColor='transparent';
+    T('My progress',200,300,40,{w:700});
+    T('SWING SCORE',200,336,20,{f:'C',w:700,c:P.muted,ls:2});
+    const vals=[48,52,58,63];const X0=230,X1=860,Y0=760,Y1=420;
+    x.strokeStyle=P.rule;x.lineWidth=2;x.beginPath();x.moveTo(X0,Y0);x.lineTo(X1,Y0);x.moveTo(X0,Y0);x.lineTo(X0,Y1-40);x.stroke();
+    const pts=vals.map((v,i)=>[X0+40+i*190,lerp(Y0,Y1,(v-40)/30)]);
+    const k=eo(prog(lt,.1,.75))*(pts.length-1);
+    x.strokeStyle=P.accent;x.lineWidth=7;x.lineJoin='round';x.lineCap='round';x.beginPath();x.moveTo(...pts[0]);
+    for(let i=1;i<=Math.floor(k);i++)x.lineTo(...pts[i]);
+    const f=k-Math.floor(k),i0=Math.floor(k);if(i0<pts.length-1)x.lineTo(lerp(pts[i0][0],pts[i0+1][0],f),lerp(pts[i0][1],pts[i0+1][1],f));
+    x.stroke();
+    pts.forEach((p,i)=>{if(k>=i-.01){const last=i===3;
+      x.fillStyle=last?P.ball:P.accent;x.beginPath();x.arc(p[0],p[1],last?16:10,0,7);x.fill();
+      if(last){x.strokeStyle=P.ink;x.lineWidth=3;x.stroke()}
+      T(String(vals[i]),p[0],p[1]-30,30,{w:700,a:'center'});
+      T('W'+(i+1),p[0],Y0+40,22,{f:'C',w:700,c:P.muted,a:'center'});}});
+    x.restore();
+  } else {
+    const lt=t-8.5;
+    const words='Shot 2 at contact · front knee 167° · weight moving into the ball · head steady · Load & Hold · Stance Width · Balance · Contact point · Weight transfer · Your one fix · Keep this report. Beat it next week. · '.repeat(3);
+    font(17,600,'C');x.fillStyle=P.ink;
+    const rows=16;
+    for(let r=0;r<rows;r++){
+      const y=360+r*24, half=Math.sin(r/rows*Math.PI);
+      const w=lerp(160,560,half);
+      const start=(r*23)%80;
+      const str=words.slice(start,start+Math.floor(w/7.2));
+      const sw=lt*1.6;
+      x.save();x.globalAlpha=1-prog(lt,.45,.7);
+      x.translate(W/2+Math.sin(r*.6+lt*5)*40*sw-w/2+r*sw*18,y-sw*60*Math.cos(r*.3));
+      x.rotate(-sw*.25);x.fillText(str,0,0);x.restore();
+    }
+  }
+});
+
+// 9.2 – 10.87 : particles flock into a skeleton, ball flies through
+const PTS=skelPoints(900,21);const PR=rnd(33);const PSTART=PTS.map(()=>[PR(),PR(),PR()]);
+S(9.2,10.87,(t)=>{
+  const lt=t-9.2;sky(lt*40);
+  const k=eio(prog(lt,.1,.85));
+  const sc=1.05,ox=W/2+20,oy=H/2+40;
+  x.fillStyle='rgba(17,21,19,.85)';
+  PTS.forEach((p,i)=>{const s=PSTART[i];
+    const ang=s[0]*7+lt*2.2, rad=120+s[1]*190;
+    const fx=W/2-80+Math.cos(ang)*rad*1.4+Math.sin(lt*3+s[2]*6)*40;
+    const fy=H/2-60+Math.sin(ang*1.3)*rad*.55;
+    const tx=ox+(p[0]-350)*sc,ty=oy+(p[1]-400)*sc;
+    const X=lerp(fx,tx,k),Y=lerp(fy,ty,k);
+    x.fillRect(X,Y,3.2,3.2);});
+  if(lt>.85){const kk=prog(lt,.85,1.1);skel(ox,oy,sc,{c:P.ink,jc:P.ball,lw:7,k:kk});}
+  // ball arc across
+  if(lt>1.0){const kb=prog(lt,1.0,1.67);
+    const bx=lerp(-60,W+60,kb),by=420-Math.sin(kb*Math.PI)*160;
+    for(let i=6;i>0;i--){x.globalAlpha=.08*i;ball(bx-i*22,by+Math.cos(kb*Math.PI)*i*10,14,0);}x.globalAlpha=1;
+    ball(bx,by,18,kb*20);}
+});
+
+// 10.87 – 12.5 : flag with logo rising from clouds, then bars
+S(10.87,12.5,(t)=>{
+  const lt=t-10.87;sky(400+lt*30);
+  if(t<11.9){
+    const cam=lt*120; // camera moves up
+    x.save();x.translate(0,cam*.6);
+    const px=W/2+40;
+    x.fillStyle='#46705f';x.fillRect(px-70,880,140,300); // net-post base
+    x.fillStyle='#2e5e4e';x.fillRect(px-8,330,16,560);
+    x.fillStyle=P.ink;x.beginPath();x.arc(px,322,14,0,7);x.fill();
+    // waving flag
+    const fw=200,fh=130;x.save();x.translate(px+8,350);
+    x.fillStyle='#fff';x.beginPath();x.moveTo(0,0);
+    for(let i=0;i<=20;i++){const u=i/20;x.lineTo(u*fw,Math.sin(u*5-lt*9)*12*u);}
+    for(let i=20;i>=0;i--){const u=i/20;x.lineTo(u*fw,fh+Math.sin(u*5-lt*9)*12*u);}
+    x.closePath();x.fill();
+    x.restore();
+    logo(px+8+fw/2-38,350+fh/2-38+Math.sin(.5*5-lt*9)*6,76,1);
+    x.restore();
+    x.drawImage(cloudLayer,-(lt*80)%W-200,90);
+  } else {
+    const k=prog(t,11.9,12.5);
+    const n=9;
+    for(let i=0;i<n;i++){
+      const h=(120+i*i*7.5)*eback(prog(k,i*.05,.45+i*.05));
+      const bx=110+i*(W-220)/(n-1),w=46;
+      x.fillStyle=i===n-1?P.accent:'#5f8a6f';rr(bx-w/2,900-h,w,h+200,6);x.fill();
+      x.fillStyle='rgba(255,255,255,.25)';x.fillRect(bx-w/2+6,900-h+8,8,h-16);
+      if(i===n-1&&h>40){x.fillStyle=P.ink;x.fillRect(bx-1.5,900-h-90,3,90);
+        logo(bx+2,900-h-90,40,1);}
+    }
+    x.drawImage(cloudLayer,-200,140);
+  }
+});
+
+// 12.5 – 14.0 : wordmark types on sky; dot of the i becomes a bouncing ball
+S(12.5,14.0,(t)=>{
+  const lt=t-12.5;sky(600+lt*25);
+  const word='sagittal';
+  const n=Math.min(word.length,Math.floor(lt/.11)+1);
+  font(210,800,'C');const full=x.measureText(word).width;
+  const x0=W/2-full/2;
+  const shown=word.slice(0,n);
+  T(shown,x0,H/2+70,210,{f:'C',w:800});
+  // highlight the 'i' tittle swap with a ball once complete
+  if(n===word.length){
+    const pre=x.measureText('sag').width,iw=x.measureText('i').width;
+    const cx=x0+pre+iw/2,cy=H/2-80;
+    const k=prog(lt,.95,1.5);
+    // cover existing tittle
+    sky2patch(cx,cy);
+    const bounce=Math.abs(Math.sin(k*Math.PI*2))*90*(1-k);
+    ball(cx,cy-bounce,lerp(14,20,eback(prog(lt,.9,1.05))),k*8);
+  }
+});
+function sky2patch(cx,cy){ // repaint a little sky over the i's dot so the ball replaces it
+  x.save();x.beginPath();x.arc(cx,cy+6,22,0,7);x.clip();
+  const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#9fb9ad');g.addColorStop(.55,'#d8e3dc');g.addColorStop(1,'#f0ece2');
+  x.fillStyle=g;x.fillRect(0,0,W,H);x.restore();
+}
+
+// 14.0 – 15.0 : wordmark on paper, then three icons (ball · phone · score)
+S(14.0,15.0,(t)=>{
+  bg('#ebe7dc');grain(.05,13);
+  if(t<14.5){
+    T('sagittal',W/2,H/2+60,190,{f:'C',w:800,a:'center'});
+  } else {
+    const k=t-14.5;
+    const items=[0,1,2];
+    items.forEach(i=>{const kk=eback(prog(k,i*.07,.2+i*.07));const cx=W/2-150+i*150,cy=H/2;
+      x.save();x.translate(cx,cy);x.scale(kk,kk);
+      if(i===0)ball(0,0,48,.6);
+      if(i===1){x.fillStyle=P.ink;rr(-34,-64,68,128,14);x.fill();x.fillStyle=P.accent;rr(-27,-54,54,104,8);x.fill();
+        skel(0,6,.12,{c:'#fff',jc:P.ball,lw:2.5});}
+      if(i===2){x.fillStyle=P.accent;rr(-52,-52,104,104,22);x.fill();T('70',0,20,54,{f:'C',w:800,c:'#fff',a:'center'});}
+      x.restore();});
+  }
+});
+
+// 15.0 – 16.63 : Swing Score counter + grid filling
+const GR=rnd(41);const GRID=[];for(let r=0;r<10;r++)for(let c=0;c<14;c++){const dx=c-6.5,dy=r-4.5;GRID.push({r,c,d:Math.hypot(dx*.9,dy)+GR()*2.2})}
+S(15.0,16.63,(t)=>{
+  bg(P.paper);
+  const lt=t-15.0;
+  const k=eo(prog(lt,0,1.15));
+  const v=Math.round(70*k);
+  const label=String(v);
+  font(150,800,'C');const tw=x.measureText(label).width;
+  const fin=lt>1.15;
+  if(fin){x.fillStyle=P.ball;x.fillRect(64,90,tw+190,150);}
+  T(label,80,220,150,{f:'C',w:800});
+  T('/100',90+tw,220,70,{f:'C',w:700,c:P.muted});
+  T('SWING SCORE · SAMPLE REPORT',82,280,24,{f:'C',w:700,c:P.muted,ls:2});
+  if(fin)T('SOLID',W-80,220,60,{f:'C',w:800,a:'right',c:P.accent,alpha:prog(lt,1.15,1.3)});
+  // grid
+  const gx=120,gy=340,cs=60;
+  x.strokeStyle=P.rule;x.lineWidth=2;
+  for(let r=0;r<=10;r++){x.beginPath();x.moveTo(gx,gy+r*cs);x.lineTo(gx+14*cs,gy+r*cs);x.stroke();}
+  for(let c=0;c<=14;c++){x.beginPath();x.moveTo(gx+c*cs,gy);x.lineTo(gx+c*cs,gy+10*cs);x.stroke();}
+  const reach=k*9;
+  GRID.forEach(g=>{if(g.d<reach){x.fillStyle=g.d<reach-2.2?P.accent:'#5f8a6f';x.fillRect(gx+g.c*cs+3,gy+g.r*cs+3,cs-6,cs-6);}});
+  // racket-head blot in the middle, like the ink blot in the reference
+  x.save();x.filter='blur(14px)';x.fillStyle='rgba(17,21,19,.92)';
+  x.beginPath();x.ellipse(gx+7*cs,gy+5*cs,lerp(120,230,k),lerp(90,170,k),-.3,0,7);x.fill();x.restore();
+  x.save();x.globalAlpha=.9;GRID.forEach(g=>{if(g.d<reach*.55&&(g.r+g.c)%3===0){x.fillStyle=P.ball;x.fillRect(gx+g.c*cs+3,gy+g.r*cs+3,cs-6,cs-6);}});x.restore();
+});
+
+// 16.63 – 17.47 : split — real footage frame | phone report
+S(16.63,17.47,(t)=>{
+  const lt=t-16.63;
+  bg(P.night);
+  const im=imgs.shot;const z=1.08+lt*.06;
+  x.save();x.beginPath();x.rect(0,0,W/2,H);x.clip();
+  const ih=H*z,iw=ih*im.width/im.height;x.drawImage(im,W/4-iw/2,H/2-ih/2,iw,ih);x.restore();
+  T('SHOT 2 · CONTACT',24,H-30,20,{f:'C',w:700,c:'#fff',ls:2});
+  // phone
+  x.save();x.translate(W*.75,H/2+lerp(30,0,eo(prog(lt,0,.4))));x.rotate(.06);
+  x.fillStyle='#000';rr(-150,-300,300,600,42);x.fill();x.strokeStyle='#3a423e';x.lineWidth=4;x.stroke();
+  x.fillStyle=P.paper;rr(-136,-286,272,572,32);x.fill();
+  T('Sagittal Tennis',-110,-230,20,{f:'C',w:700,c:P.muted,ls:1});
+  T('Swing Score',-110,-190,24,{w:600});
+  T('70',-110,-100,96,{f:'C',w:800});T('/100',-30,-100,34,{f:'C',w:700,c:P.muted});
+  const bars=[.96,.7,.62,.81,.44];
+  bars.forEach((v,i)=>{const kk=eo(prog(lt,.1+i*.06,.5+i*.06));
+    x.fillStyle=P.rule;rr(-110,-50+i*44,220,14,7);x.fill();
+    x.fillStyle=v<.5?'#c98a6e':P.accent;rr(-110,-50+i*44,220*v*kk,14,7);x.fill();});
+  x.fillStyle=P.ball;rr(-110,180,220,56,12);x.fill();
+  T('Your one fix',0,216,22,{w:700,a:'center'});
+  x.restore();
+  T('2026 · THE APP',W/2+24,H-30,20,{f:'C',w:700,c:P.onNightMuted,ls:2});
+});
+
+// 17.47 – 19.1 : every shot → one fix
+const DR=rnd(55);const DOTS=[];for(let i=0;i<48;i++)DOTS.push({sx:200+DR()*680,sy:240+DR()*600,gx:i%8,gy:Math.floor(i/8)});
+S(17.47,19.1,(t)=>{
+  bg(P.paper);
+  const lt=t-17.47;
+  const k1=eio(prog(lt,0,.5)), k2=eio(prog(lt,.85,1.4));
+  const gx0=W/2-140,gy0=H/2-125;
+  DOTS.forEach((d,i)=>{
+    let X=lerp(d.sx,gx0+d.gx*40,k1),Y=lerp(d.sy,gy0+d.gy*50,k1);
+    const tx=W/2+150+(i%4)*0,ty=H/2;
+    X=lerp(X,tx,k2);Y=lerp(Y,ty,k2);
+    x.fillStyle=P.accent;x.beginPath();x.arc(X,Y,lerp(13,8,k2),0,7);x.fill();});
+  T('every shot',W/2-175,H/2+12,40,{w:500,a:'right',alpha:prog(lt,.3,.5),c:P.ink});
+  if(k2>.98){ball(W/2+150,H/2,24,lt*3);}
+  T('one fix',W-100,H/2+12,40,{w:700,a:'right',alpha:prog(lt,.2,.4)});
+  hud('FILM IT · UPLOAD IT · GET YOUR SWING SCORE','Nº 03');
+});
+
+// ---- 19.1 – 25.0 : a brief history of the swing ----
+function hist(year,cap,num,dark,draw){return (t,lt)=>{
+  draw(lt);
+  const c=dark?P.onNight:P.ink,m=dark?P.onNightMuted:P.muted;
+  T('A BRIEF HISTORY OF THE SWING',40,52,17,{f:'C',w:700,c:m,ls:2});
+  T(num,W-40,52,17,{f:'C',w:700,c:m,a:'right',ls:2});
+  T(year,40,H-90,64,{w:500,c});
+  T(cap,42,H-48,19,{f:'C',w:700,c:m,ls:2});
+};}
+const H1874=hist('1874','LAWN TENNIS · FIRST PATENTED','Nº 04',false,lt=>{
+  bg('#e9e3d3');grain(.07,17);
+  x.save();x.translate(W/2,H/2-40);x.rotate(-.5+lt*.15);
+  // old lopsided wooden racket
+  x.strokeStyle='#6b4a2b';x.lineWidth=16;x.beginPath();x.ellipse(0,-130,120,175,.08,0,7);x.stroke();
+  x.strokeStyle='rgba(107,74,43,.5)';x.lineWidth=2;
+  for(let i=-5;i<=5;i++){x.beginPath();x.moveTo(i*20,-290);x.lineTo(i*20,30);x.stroke();x.beginPath();x.moveTo(-115,-130+i*28);x.lineTo(115,-130+i*28);x.stroke();}
+  x.fillStyle='#6b4a2b';x.beginPath();x.moveTo(-20,40);x.lineTo(20,40);x.lineTo(16,300);x.lineTo(-16,300);x.fill();
+  x.fillStyle='#3e2a18';rr(-22,220,44,110,10);x.fill();
+  x.restore();
+  T('Lawn Tennis',W-70,H-90,40,{w:400,a:'right',c:'#6b4a2b'});
+});
+const H1877=hist('1877','THE FIRST CHAMPIONSHIPS · GRASS','Nº 05',true,lt=>{
+  bg('#2f5a3a');grain(.08,19);
+  x.save();x.translate(W/2,H/2-30);x.scale(1+lt*.08,1+lt*.08);
+  x.strokeStyle='rgba(255,255,255,.9)';x.lineWidth=5;
+  const w=520,h=300;x.strokeRect(-w/2,-h/2,w,h);x.strokeRect(-w/2,-h/2+40,w,h-80);
+  x.beginPath();x.moveTo(0,-h/2-20);x.lineTo(0,h/2+20);x.stroke();
+  x.beginPath();x.moveTo(-150,-h/2+40);x.lineTo(-150,h/2-40);x.moveTo(150,-h/2+40);x.lineTo(150,h/2-40);x.moveTo(-150,0);x.lineTo(150,0);x.stroke();
+  ball(-150+lt*360,-60+Math.sin(lt*6)*40,10,lt*10);
+  x.restore();
+});
+const H1878=hist('1878','MOTION, FRAME BY FRAME','Nº 06',true,lt=>{
+  bg('#231d16');
+  const cols=4,rows=3,cw=230,ch=200;const ox=W/2-cols*cw/2,oy=170;
+  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const i=r*cols+c;
+    const X=ox+c*cw+8,Y=oy+r*ch+8;x.fillStyle='#d9ccb2';x.fillRect(X,Y,cw-16,ch-16);
+    // stick swing phases
+    const ph=((i/12)+lt*.6)%1, a=-1.6+ph*3.6;
+    x.save();x.translate(X+(cw-16)/2,Y+ch-40);x.strokeStyle='#2a221a';x.lineWidth=6;x.lineCap='round';
+    x.beginPath();x.moveTo(-14,0);x.lineTo(0,-50);x.lineTo(14,0);x.moveTo(0,-50);x.lineTo(0,-100);
+    x.moveTo(0,-90);x.lineTo(Math.cos(a)*50,-90+Math.sin(a)*30);x.stroke();
+    x.beginPath();x.arc(0,-115,13,0,7);x.fillStyle='#2a221a';x.fill();x.restore();
+    T(String(i+1),X+8,Y+22,16,{f:'C',w:700,c:'#6e5f48'});}
+});
+const H1968=hist('1968','THE OPEN ERA','Nº 07',true,lt=>{
+  bg('#0b0d0c');
+  const g=x.createRadialGradient(W/2,H/2-60,10,W/2,H/2-60,420);g.addColorStop(0,'rgba(255,255,240,.25)');g.addColorStop(1,'rgba(0,0,0,0)');
+  x.fillStyle=g;x.fillRect(0,0,W,H);
+  ball(W/2,H/2-60,170,lt*1.5);
+});
+const H2006=hist('2006','LINE CALLING GOES ELECTRONIC','Nº 08',true,lt=>{
+  bg('#2b4b7a');
+  x.fillStyle='#fff';x.fillRect(0,H/2-40,W,46);
+  x.save();x.globalAlpha=.85;x.strokeStyle='#ddf24c';x.lineWidth=4;
+  x.beginPath();x.ellipse(W/2+40,H/2+20,90,40,0,0,7);x.stroke();x.restore();
+  ball(W/2+40,H/2+20-lerp(260,0,eo(clamp(lt*3))),36,lt*12);
+  T('IN',W/2+40,H/2+150,60,{f:'C',w:800,c:'#fff',a:'center',alpha:prog(lt,.3,.4)});
+});
+const H2007=hist('2007','A CAMERA IN EVERY POCKET','Nº 09',false,lt=>{
+  bg('#e6e8e3');
+  x.save();x.translate(W/2,H/2-30);x.rotate(-.12+lt*.1);
+  x.fillStyle='#16191a';rr(-130,-260,260,520,40);x.fill();
+  x.fillStyle='#2b3134';rr(-116,-246,232,492,30);x.fill();
+  x.fillStyle='#000';x.beginPath();x.arc(0,-225,8,0,7);x.fill();
+  x.restore();
+});
+const H2020=hist('2020','POSE ESTIMATION ON A PHONE','Nº 10',true,lt=>{
+  bg('#0c1110');
+  x.fillStyle='rgba(167,176,171,.25)';for(let i=0;i<W;i+=36)for(let j=0;j<H;j+=36)x.fillRect(i,j,2,2);
+  skel(W/2+20,H/2+10,1.0,{c:'#fff',jc:P.ball,lw:5,k:prog(lt,0,.35)});
+});
+const H2026a=hist('2026','EVERY SHOT, ON VIDEO','Nº 11',true,lt=>{
+  const im=imgs.shot;const z=1.15+lt*.08;const ih=H*z,iw=ih*im.width/im.height;
+  x.drawImage(im,W/2-iw/2,H/2-ih/2,iw,ih);
+  const g=x.createLinearGradient(0,H*.6,0,H);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.75)');x.fillStyle=g;x.fillRect(0,0,W,H);
+  x.fillStyle='rgba(0,0,0,.45)';x.fillRect(0,0,W,80);
+});
+const H2026b=hist('2026','SAGITTAL TENNIS','Nº 12',false,lt=>{
+  bg('#dcdcd2');
+  x.save();x.translate(W/2,H/2-30);x.rotate(.05-lt*.1);
+  x.fillStyle='#000';rr(-140,-280,280,560,40);x.fill();
+  x.fillStyle=P.paper;rr(-127,-267,254,534,30);x.fill();
+  T('Swing Score',-100,-190,24,{w:600});
+  T('70',-100,-100,90,{f:'C',w:800});T('/100',-22,-100,30,{f:'C',w:700,c:P.muted});
+  x.strokeStyle=P.accent;x.lineWidth=5;x.beginPath();x.moveTo(-100,40);x.lineTo(-40,20);x.lineTo(20,-10);x.lineTo(100,-40);x.stroke();
+  x.fillStyle=P.ball;rr(-100,160,200,52,12);x.fill();T('Your one fix',0,194,20,{w:700,a:'center'});
+  x.restore();
+});
+const H_next=hist('NEXT WEEK','YOUR NEXT SESSION IS THE TEST','Nº 13',true,lt=>{
+  bg(P.night);
+  T('Beat it',W/2,H/2-20,150,{f:'C',w:800,c:P.onNight,a:'center'});
+  T('next week.',W/2,H/2+120,150,{f:'C',w:800,c:P.ball,a:'center',alpha:prog(lt,.12,.2)});
+});
+const HIST=[[19.1,H1874],[19.93,H1877],[20.73,H1878],[21.57,H1968],[21.97,H2006],[22.4,H2007],[22.8,H2020],[23.23,H2026a],[24.03,H2026b],[24.47,H_next]];
+S(19.1,24.93,(t)=>{let cur=HIST[0];HIST.forEach(h=>{if(t>=h[0])cur=h});cur[1](t,t-cur[0]);});
+// 24.93 – 25.5 : rapid flicker through the history
+const FLICK=[H1878,H2020,H1874,H2026a,H2006,H1968,H2007,H2026b];
+S(24.93,25.5,(t)=>{const i=Math.floor((t-24.93)*30/2);FLICK[i%FLICK.length](t,.2);});
+
+// 25.5 – end : end card
+S(25.5,99,(t)=>{
+  const lt=t-25.5;
+  bg(P.night);
+  const g=x.createRadialGradient(W/2,H/2,20,W/2,H/2,620);g.addColorStop(0,'rgba(46,94,78,.55)');g.addColorStop(1,'rgba(14,19,17,0)');
+  x.fillStyle=g;x.fillRect(0,0,W,H);
+  const k=eo(prog(lt,0,.35));
+  font(150,800,'C');const tw=x.measureText('Sagittal').width;
+  const ls=130,gap=34,total=ls+gap+tw;const x0=W/2-total/2;
+  logo(x0,H/2-115,ls,prog(lt,0,.35));
+  x.save();x.globalAlpha=k*.5;x.strokeStyle='#3a423e';x.lineWidth=2;rr(x0,H/2-115,ls,ls,ls*14/64);x.stroke();x.restore();
+  T('Sagittal',x0+ls+gap+lerp(30,0,k),H/2+10,150,{f:'C',w:800,c:P.onNight,alpha:k});
+  T('find the one fix.',W/2,H/2+120,44,{w:400,c:P.onNightMuted,a:'center',alpha:prog(lt,.3,.6)});
+  T('sagittaltennis.com · free',W/2,H-80,24,{f:'C',w:700,c:P.onNightMuted,a:'center',ls:3,alpha:prog(lt,.5,.8)});
+});
+
+function render(t){
+  x.setTransform(1,0,0,1,0,0);x.globalAlpha=1;x.filter='none';x.letterSpacing='0px';
+  for(const s of scenes){if(t>=s.a&&t<s.b){s.fn(t);break;}}
+}
+window.ready=(async()=>{
+  await Promise.all(['400 10px B','500 10px B','600 10px B','700 10px B','700 10px C','800 10px C'].map(f=>document.fonts.load(f)));
+  await load('shot','assets/shot-3.jpg');
+  makeClouds();render(0);return true;
+})();
+window.render=render;
+</script></body></html>
