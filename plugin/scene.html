@@ -1,0 +1,304 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face{font-family:G;font-weight:400;src:url(assets/fonts/Geist-400.woff2)}
+@font-face{font-family:G;font-weight:500;src:url(assets/fonts/Geist-500.woff2)}
+@font-face{font-family:G;font-weight:600;src:url(assets/fonts/Geist-600.woff2)}
+@font-face{font-family:G;font-weight:700;src:url(assets/fonts/Geist-700.woff2)}
+@font-face{font-family:G;font-weight:800;src:url(assets/fonts/Geist-800.woff2)}
+@font-face{font-family:G;font-weight:900;src:url(assets/fonts/Geist-900.woff2)}
+@font-face{font-family:M;font-weight:500;src:url(assets/fonts/GeistMono-500.woff2)}
+@font-face{font-family:M;font-weight:600;src:url(assets/fonts/GeistMono-600.woff2)}
+html,body{margin:0;background:#000}canvas{display:block}
+</style></head>
+<body><canvas id="c" width="1920" height="1080"></canvas>
+<script>
+// Mentaljineer · Adaptive Tutor plugin tutorial (cinematic, 16:9). render(t) draws the frame at time t (seconds).
+// Numbers: 3,601 copies (live count on mentaljineer.pages.dev/api/prompts, Nov 2026), 3,000+ users
+// and the 10,000 target are from Youssouf. Process details are quoted from the prompt itself.
+const W=1920,H=1080;
+const cv=document.getElementById('c');let x=cv.getContext('2d');
+const P={paper:'#f2f2f3',paper2:'#e6e6e8',white:'#ffffff',ink:'#0e0e0f',muted:'#58585d',rule:'#d4d4d8',
+  night:'#0b0b0c',night2:'#141416',onNight:'#f2f2f3',onNightMuted:'#9a9a9f',
+  navy:'#060a26',navy2:'#111c5a',navy3:'#24348a',ice:'#aeb8e6',blue:'#7f9bff',blueHi:'#b7c6ff',ttBlue:'#8ec5ff'};
+
+// ---------- helpers ----------
+const clamp=(v,a=0,b=1)=>Math.min(b,Math.max(a,v));
+const lerp=(a,b,k)=>a+(b-a)*k;
+const prog=(t,a,b)=>clamp((t-a)/(b-a));
+const eo=k=>1-Math.pow(1-k,3);
+const eio=k=>k<.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2;
+const eback=k=>{const c=1.7;return 1+(c+1)*Math.pow(k-1,3)+c*Math.pow(k-1,2)};
+function rnd(seed){let s=seed>>>0||1;return()=>{s^=s<<13;s^=s>>>17;s^=s<<5;return((s>>>0)%100000)/100000}}
+function bg(c){x.fillStyle=c;x.fillRect(0,0,W,H)}
+function font(size,w=500,f='G'){x.font=`${w} ${size}px ${f}`}
+function T(s,X,Y,size,{w=500,f='G',c=P.ink,a='left',alpha=1,ls=0}={}){
+  x.save();x.globalAlpha*=alpha;font(size,w,f);x.fillStyle=c;x.textAlign=a;x.textBaseline='alphabetic';
+  if(ls)x.letterSpacing=ls+'px';x.fillText(s,X,Y);x.restore();}
+const typed=(s,k)=>s.slice(0,Math.round(s.length*clamp(k)));
+function rr(X,Y,w,h,r){x.beginPath();x.roundRect(X,Y,w,h,r)}
+function grain(alpha=.05,seed=1,col='#000'){const r=rnd(seed);x.save();x.globalAlpha=alpha;x.fillStyle=col;
+  for(let i=0;i<1100;i++)x.fillRect(r()*W,r()*H,1.5,1.5);x.restore();}
+function hud(label,num,dark=false){const c=dark?P.onNightMuted:P.muted;
+  T(label,40,52,16,{f:'M',w:500,c,ls:1.5});T(num,W-40,52,16,{f:'M',w:500,c,a:'right',ls:1.5});}
+function reticle(X,Y,r,c){x.save();x.strokeStyle=c;x.lineWidth=2;x.beginPath();x.arc(X,Y,r,0,7);x.stroke();
+  x.beginPath();x.arc(X,Y,r*.45,0,7);x.stroke();x.beginPath();x.moveTo(X-r*1.3,Y);x.lineTo(X+r*1.3,Y);
+  x.moveTo(X,Y-r*1.3);x.lineTo(X,Y+r*1.3);x.stroke();x.restore();}
+function fmt(n){return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g,',')}
+
+const imgs={};
+function load(n,src){return new Promise(r=>{const i=new Image();i.onload=()=>{imgs[n]=i;r()};i.src=src})}
+function dragon(X,Y,s,{white=true,alpha=1,rot=0}={}){x.save();x.globalAlpha*=alpha;x.translate(X,Y);x.rotate(rot);
+  x.drawImage(white?imgs.dw:imgs.db,-s/2,-s/2,s,s);x.restore();}
+// glass orb (site's glass look) used as the "dot"
+function orb(X,Y,r){x.save();
+  const g=x.createRadialGradient(X-r*.3,Y-r*.35,r*.05,X,Y,r);
+  g.addColorStop(0,'#ffffff');g.addColorStop(.35,P.blueHi);g.addColorStop(1,P.navy3);
+  x.shadowColor='rgba(140,170,255,.7)';x.shadowBlur=r*.8;x.fillStyle=g;x.beginPath();x.arc(X,Y,Math.max(.01,r),0,7);x.fill();x.restore();}
+
+// navy "horizon" sky with soft glass clouds
+let cloudLayer=null;
+function makeClouds(){const c=document.createElement('canvas');c.width=W*2;c.height=H;const g=c.getContext('2d');const r=rnd(7);g.filter='blur(12px)';
+  const blob=(cx,cy,s)=>{for(let i=0;i<14;i++){const a=r()*Math.PI,d=r()*s;g.fillStyle=`rgba(200,212,255,${.18+r()*.25})`;
+    g.beginPath();g.arc(cx+Math.cos(a)*d*1.8,cy-Math.sin(a)*d*.5,s*(.35+r()*.4),0,7);g.fill();}};
+  for(let i=0;i<9;i++)blob(r()*W*2,900+r()*160,90+r()*70);for(let i=0;i<5;i++)blob(r()*W*2,200+r()*400,40+r()*40);
+  g.filter='none';cloudLayer=c;}
+const STARS=(()=>{const r=rnd(77),a=[];for(let i=0;i<140;i++)a.push([r()*W,r()*H*.75,r()]);return a})();
+function sky(drift=0,t=0){const g=x.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,P.navy);g.addColorStop(.6,P.navy2);g.addColorStop(1,'#3a4aa8');x.fillStyle=g;x.fillRect(0,0,W,H);
+  STARS.forEach(([sx,sy,s])=>{x.fillStyle=`rgba(238,241,255,${.25+.5*Math.abs(Math.sin(t*2+s*9))*s})`;x.fillRect(sx,sy,1.6+s,1.6+s);});
+  x.drawImage(cloudLayer,-(drift%W),0);}
+
+// dragon particle targets, sampled from the logo itself
+let DPTS=[];
+function sampleDragon(){const c=document.createElement('canvas');c.width=c.height=200;const g=c.getContext('2d');g.drawImage(imgs.db,0,0,200,200);
+  const d=g.getImageData(0,0,200,200).data,r=rnd(5),pts=[];
+  for(let y=0;y<200;y+=2)for(let X=0;X<200;X+=2){if(d[(y*200+X)*4+3]>128&&r()<.9)pts.push([X/200,y/200]);}
+  DPTS=pts;}
+
+// ---------- flapping dragon ----------
+// The logo is one silhouette. Cut it into body + two wings (viewBox 0..496 units) and
+// rotate each wing about its shoulder. Polygons were drawn against a gridded render of the mark.
+const WING_L=[[0,0],[300,0],[318,262],[245,302],[0,302]], PIV_L=[300,262];
+const WING_R=[[300,0],[496,0],[496,95],[395,128],[350,200],[345,224],[322,262],[318,262]], PIV_R=[328,252];
+const DPART={};
+function buildDragonParts(){
+  const R=2; // build at 992px
+  ['dw','db'].forEach(key=>{
+    const img=imgs[key];
+    const make=(poly,invert)=>{const c=document.createElement('canvas');c.width=c.height=496*R;const g=c.getContext('2d');
+      g.drawImage(img,0,0,496*R,496*R);
+      g.globalCompositeOperation=invert?'destination-out':'destination-in';
+      const path=p=>{g.beginPath();p.forEach(([a,b],i)=>i?g.lineTo(a*R,b*R):g.moveTo(a*R,b*R));g.closePath();g.fill();};
+      if(invert){path(WING_L);path(WING_R);}else path(poly);
+      return c;};
+    DPART[key]={body:make(null,true),L:make(WING_L),R:make(WING_R)};
+  });
+}
+// phase in radians; a>0 = downstroke
+// draw solid on a scratch canvas, then composite once, so overlapping parts never double up when faded
+const FLAPBUF=document.createElement('canvas');FLAPBUF.width=FLAPBUF.height=1400;
+function flapDragon(X,Y,s,phase,{white=true,alpha=1,rot=0}={}){
+  const main=x,pad=s*.2,B=Math.ceil(s+pad*2);x=FLAPBUF.getContext('2d');x.setTransform(1,0,0,1,0,0);x.clearRect(0,0,B,B);
+  flapSolid(pad+s/2,pad+s/2,s,phase,white);
+  x=main;x.save();x.globalAlpha*=alpha;x.translate(X,Y);x.rotate(rot);x.drawImage(FLAPBUF,0,0,B,B,-s/2-pad,-s/2-pad,B,B);x.restore();
+}
+function flapSolid(X,Y,s,phase,white){
+  const parts=DPART[white?'dw':'db'],u=s/496,a=Math.sin(phase);
+  x.save();x.translate(X,Y);x.translate(0,-a*s*.03);x.translate(-s/2,-s/2);
+  const wing=(img,piv,ang,sx,sy)=>{x.save();x.translate(piv[0]*u,piv[1]*u);x.rotate(ang);x.scale(sx,sy);x.translate(-piv[0]*u,-piv[1]*u);
+    x.drawImage(img,0,0,s,s);x.restore();};
+  // far wing: mostly foreshortens toward the shoulder on the downstroke
+  const fr=a>0?1-.32*a:1-.06*a;
+  wing(parts.R,PIV_R,a*.1,fr,fr);
+  x.drawImage(parts.body,0,0,s,s);
+  // near wing: swings about the shoulder and flattens a little on the downstroke
+  wing(parts.L,PIV_L,a>0?-a*.3:-a*.2,1,1-.14*Math.max(0,a));
+  // hide the joint at the shoulder
+  x.fillStyle=white?'#f2f2f3':'#0b0b0c';x.beginPath();x.arc((PIV_L[0]-4)*u,(PIV_L[1]+4)*u,24*u,0,7);x.fill();
+  x.restore();
+}
+const FLAP=7.5; // wingbeat speed (rad/s)
+
+// ---------- cinematic helpers ----------
+const GLOW='rgba(120,150,255,1)';
+function cam(s,cx=W/2,cy=H/2){x.translate(W/2,H/2);x.scale(s,s);x.translate(-cx,-cy);}
+// glowing text: blurred halo underneath, crisp text on top
+function GT(s,X,Y,size,{w=500,c='#eef1ff',a='left',alpha=1,ls=0,glow=.8,blur=0,f='G'}={}){
+  if(alpha<=0)return;x.save();x.globalAlpha*=alpha;font(size,w,f);x.textAlign=a;x.textBaseline='alphabetic';if(ls)x.letterSpacing=ls+'px';
+  if(blur>0)x.filter=`blur(${blur}px)`;
+  if(glow>0){x.shadowColor=`rgba(120,150,255,${glow})`;x.shadowBlur=size*.6;}
+  x.fillStyle=c;x.fillText(s,X,Y);x.restore();}
+// a light streak: an arc with a hot core and a wide soft halo
+function streak(cx,cy,r,a0,len,w,alpha=1){if(alpha<=0)return;
+  x.save();x.globalAlpha*=alpha;x.lineCap='round';x.globalCompositeOperation='lighter';
+  [[w*4,'rgba(60,90,255,.25)',w*6],[w*1.8,'rgba(110,140,255,.7)',w*3],[w*.6,'rgba(230,238,255,.95)',w]].forEach(([lw,c,b])=>{
+    x.strokeStyle=c;x.lineWidth=lw;x.shadowColor=GLOW;x.shadowBlur=b;
+    const steps=24;for(let i=0;i<steps;i++){const t0=a0+len*i/steps,t1=a0+len*(i+1)/steps,taper=Math.sin(Math.PI*(i+.5)/steps);
+      x.globalAlpha=alpha*taper;x.beginPath();x.arc(cx,cy,r,t0,t1);x.stroke();}});
+  x.restore();}
+// the deep blue "liquid" glow along the bottom of the frame
+function floorGlow(t,level=1,yBase=H*.82){if(level<=0)return;
+  x.save();x.globalAlpha=clamp(level);x.filter='blur(70px)';
+  const g=x.createLinearGradient(0,yBase-200,0,H);g.addColorStop(0,'rgba(60,90,255,.0)');g.addColorStop(.35,'rgba(70,100,255,.85)');g.addColorStop(1,'rgba(36,52,138,1)');
+  x.fillStyle=g;x.beginPath();x.moveTo(-100,H+100);
+  for(let i=0;i<=24;i++){const u=i/24,X=-100+u*(W+200);x.lineTo(X,yBase+Math.sin(u*5+t*1.3)*55+Math.sin(u*11-t*.9)*25-Math.exp(-Math.pow((u-.5)*3,2))*60);}
+  x.lineTo(W+100,H+100);x.closePath();x.fill();x.restore();}
+function vignette(){const g=x.createRadialGradient(W/2,H/2,H*.3,W/2,H/2,H*1.05);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.7)');x.fillStyle=g;x.fillRect(0,0,W,H);}
+function chatBox(X,Y,w,h,{text='',caretOn=true,glowTail=0,showFoot=true}={}){
+  x.save();x.fillStyle='rgba(28,29,34,.96)';rr(X,Y,w,h,30);x.fill();x.strokeStyle='rgba(255,255,255,.12)';x.lineWidth=2;x.stroke();
+  // typed text: the last few characters still glowing in, like the reference
+  font(30,400);let cx=X+40;const n=text.length;
+  for(let i=0;i<n;i++){const ch=text[i],age=n-1-i,hot=clamp(1-age/5)*glowTail;
+    x.save();x.fillStyle=hot>.05?`rgb(${lerp(238,150,hot)},${lerp(241,175,hot)},255)`:'#eef1ff';
+    if(hot>.05){x.shadowColor=GLOW;x.shadowBlur=24*hot;x.filter=`blur(${hot*2.5}px)`;}
+    x.fillText(ch,cx,Y+64);x.restore();cx+=x.measureText(ch).width;}
+  if(caretOn){x.fillStyle='#eef1ff';x.fillRect(cx+4,Y+38,3,34);}
+  if(showFoot){T('+',X+40,Y+h-30,40,{w:300,c:'#c9cbd6'});
+    x.fillStyle=P.navy3;x.beginPath();x.arc(X+w-50,Y+h-44,24,0,7);x.fill();
+    x.strokeStyle='#fff';x.lineWidth=3.5;x.lineCap='round';x.beginPath();x.moveTo(X+w-50,Y+h-33);x.lineTo(X+w-50,Y+h-55);x.moveTo(X+w-59,Y+h-46);x.lineTo(X+w-50,Y+h-55);x.lineTo(X+w-41,Y+h-46);x.stroke();}
+  x.restore();}
+function chip(X,Y,label){font(22,500);const w=x.measureText(label).width+44;x.save();x.strokeStyle='rgba(255,255,255,.16)';x.lineWidth=2;rr(X,Y,w,48,14);x.stroke();
+  T(label,X+22,Y+32,22,{w:500,c:'#c9cbd6'});x.restore();return w;}
+function stepTag(n,label,X,Y,alpha=1,size=26){GT(`STEP ${n}`,X,Y,size*.7,{f:'M',w:600,c:P.blueHi,ls:3,alpha,glow:.6});GT(label,X,Y+size*1.5,size,{w:500,alpha,glow:.5});}
+
+const scenes=[];const S=(a,b,fn)=>scenes.push({a,b,fn});
+
+// 0 – 1.9 : logo reveal inside a ring of light
+S(0,1.9,t=>{
+  bg('#000');x.save();cam(lerp(1.0,1.12,eo(t/1.9)));
+  const ra=t*1.6;
+  streak(W/2,H/2,420,ra-2.2,lerp(.2,2.4,eo(prog(t,0,1.2))),9,prog(t,0,.4));
+  streak(W/2,H/2,470,ra+1.2,lerp(.1,1.6,eo(prog(t,.15,1.3))),6,prog(t,.15,.5)*.8);
+  // dragon first, then the wordmark wipes on
+  const k=eo(prog(t,.05,.45));font(118,700);x.letterSpacing='-3px';const tw=x.measureText('Mentaljineer').width;x.letterSpacing='0px';
+  const ds=150,total=ds+24+tw,x0=W/2-total/2;
+  x.save();x.shadowColor=GLOW;x.shadowBlur=40;flapDragon(x0+ds/2,H/2-20,ds*lerp(.4,1,eback(k)),t*FLAP*1.3,{alpha:k});x.restore();
+  const wipe=eo(prog(t,.35,1.2));x.save();x.beginPath();x.rect(x0+ds+10,0,(tw+40)*wipe,H);x.clip();
+  GT('Mentaljineer',x0+ds+24,H/2+20,118,{w:700,ls:-3,glow:.9,blur:lerp(6,0,wipe)});x.restore();
+  GT('A private tutor plugin in ChatGPT. No coding, no server, no Custom GPT.',W/2,H/2+120,30,{a:'center',c:'#aeb8e6',alpha:prog(t,1.0,1.35),glow:.4});
+  x.restore();vignette();
+});
+
+// 1.9 – 2.7 : streaks swirl, an "@" drifts through
+S(1.9,2.7,t=>{
+  const lt=t-1.9;bg('#000');floorGlow(t,prog(lt,.2,.8)*.7,H*1.05);
+  streak(W/2-200,H/2-100,300,lt*5-1,1.1,10,1);streak(W/2+260,H/2-40,260,-lt*4+2,.9,8,.9);streak(W/2,H/2+60,520,lt*2.5+.4,.7,6,.7);
+  GT('@',W/2+lerp(160,40,eo(lt/.8)),H/2-lerp(200,120,lt/.8),110,{w:500,blur:lerp(10,2,lt/.8),glow:1});
+  vignette();
+});
+
+// 2.7 – 3.4 : the chat box rises in and "@Plugin Creator" types
+S(2.7,3.4,t=>{
+  const lt=t-2.7;bg('#000');floorGlow(t,.95,H*.86);
+  streak(420,300,260,lt*3-2.2,.8,8,1-prog(lt,.3,.7));
+  const y=lerp(H*.62,H*.42,eo(prog(lt,0,.35)));
+  x.save();x.filter=`blur(${lerp(8,0,eo(prog(lt,0,.3)))}px)`;
+  chatBox(W/2-560,y,1120,180,{text:typed('@Plugin Creator',prog(lt,.15,.65)),glowTail:1});x.restore();
+  vignette();
+});
+
+// 3.4 – 4.6 : pull back: Step 1 heading, box, chips
+S(3.4,4.6,t=>{
+  const lt=t-3.4;bg('#000');floorGlow(t,1,H*.86);
+  x.save();cam(lerp(1.0,1.06,lt/1.2));
+  const hy=H*.33;x.save();x.shadowColor=GLOW;x.shadowBlur=30;flapDragon(W/2-330,hy-18,72,t*FLAP*1.3);x.restore();
+  GT('Open Plugin Creator',W/2-270,hy,64,{w:500,ls:-1,glow:.6});
+  GT('STEP 1',W/2-270,hy-80,20,{f:'M',w:600,c:P.blueHi,ls:4,glow:.6});
+  chatBox(W/2-560,H*.42,1120,180,{text:'@Plugin Creator',glowTail:0,caretOn:Math.floor(t*3)%2===0});
+  let cx=W/2-420;['New chat','@Plugin Creator','Not listed? Settings → Plugins'].forEach((l,i)=>{const a=prog(lt,.15+i*.1,.35+i*.1);x.save();x.globalAlpha=a;cx+=chip(cx,H*.42+210,l)+16;x.restore();});
+  x.restore();vignette();
+});
+
+// 4.6 – 5.8 : close-up on the mention menu
+S(4.6,5.8,t=>{
+  const lt=t-4.6;bg('#000');floorGlow(t,1,H*.8);
+  x.save();cam(lerp(1.9,2.05,lt/1.2),lerp(W/2+120,W/2+60,lt/1.2),H*.42);
+  GT('Open Plugin Creator',W/2-270,H*.33,64,{w:500,ls:-1,glow:.6});
+  chatBox(W/2-560,H*.42,1120,180,{text:'@Plugin Creator',caretOn:false});
+  // menu
+  const mx=W/2-80,my=H*.42-250,mw=440;x.save();x.globalAlpha=eo(prog(lt,0,.2));
+  x.fillStyle='rgba(32,33,40,.98)';rr(mx,my,mw,236,18);x.fill();x.strokeStyle='rgba(255,255,255,.12)';x.lineWidth=1.5;x.stroke();
+  x.fillStyle='rgba(127,155,255,.16)';rr(mx+8,my+10,mw-16,74,12);x.fill();
+  T('Plugin Creator',mx+26,my+44,22,{w:600,c:'#fff'});T('Build a private plugin',mx+26,my+70,15,{c:'#9a9aa6'});
+  x.strokeStyle=P.blueHi;x.lineWidth=2.5;x.beginPath();x.moveTo(mx+mw-46,my+46);x.lineTo(mx+mw-38,my+54);x.lineTo(mx+mw-24,my+38);x.stroke();
+  T('Not in the list?',mx+26,my+130,20,{w:500,c:'#d6d6de'});T('Settings → Plugins',mx+26,my+156,15,{c:'#9a9aa6'});
+  T('Needs Plugin Creator on your account',mx+26,my+206,15,{f:'M',c:'#7d7d88'});
+  x.restore();x.restore();vignette();
+});
+
+// 5.8 – 6.5 : a streak whips through, Step 2 lands
+S(5.8,6.5,t=>{
+  const lt=t-5.8;bg('#000');floorGlow(t,.6,H*1.0);
+  streak(W*.62,H*.42,300,lt*6-1.8,1.0,11,1-prog(lt,.45,.7));
+  stepTag(2,'Give Plugin Creator the brief',W/2-260,H/2,prog(lt,.25,.45),48);
+  vignette();
+});
+
+// 6.5 – 8.6 : the brief pulls into focus; Step 3 underneath
+const BRIEF=[
+  'Create a private ChatGPT plugin called “Adaptive Tutor”.',
+  'Purpose: personalised, one-to-one teaching that adapts to',
+  'demonstrated understanding rather than assumed knowledge.',
+  'I will provide the complete tutoring instructions in my next message.',
+  '',
+  '1. Create a skills-only plugin. No external server or custom MCP tools.',
+  '2. Preserve the full teaching workflow: goal, probing, DAGs, quizzes,',
+  '    strict marking, LaTeX practice papers and session recovery.',
+  '3. Use ChatGPT’s own diagrams, maths, source checks and files.',
+  '4. Identify tool limits and implement practical fallbacks.',
+  '5. Include the original tutoring instructions as a reference file.',
+  '6. Validate the files, manifests and behaviour.',
+  '7. Save it privately to my ChatGPT account.',
+  '8. Give me a link and explain how to activate it.',
+  '',
+  'Do not simplify the tutoring approach or remove constraints.',
+  'Wait for my tutoring instructions before building the plugin.'];
+S(6.5,8.6,t=>{
+  const lt=t-6.5;bg('#000');floorGlow(t,.75,H*1.0);
+  if(t<7.3){const k=prog(lt,0,.8);
+    GT(BRIEF[0],W/2,H/2,lerp(46,40,k),{a:'center',w:600,blur:lerp(14,3,eo(k)),glow:1,c:'#c8d3ff'});
+    GT('Plugin Creator brief',W/2,H/2+60,22,{a:'center',f:'M',c:'#8892c8',blur:lerp(10,4,k),alpha:.6,glow:.6});
+  } else {const k=eo(prog(t,7.3,7.75));
+    x.save();cam(lerp(1.08,1,k),W/2,H*.45);
+    const k3=eo(prog(t,8.0,8.25));
+    const X0=W/2-600,Y0=170,lh=41;
+    BRIEF.forEach((l,i)=>{if(!l)return;const hot=i>=15;const a=prog(t,7.3+i*.02,7.45+i*.02);
+      GT(l,X0,Y0+i*lh,28,{w:i===0?700:400,c:hot?'#b7c6ff':'#e9ecf8',glow:hot?.9:.15,blur:lerp(5,0,k)+(hot?.6:0)+k3*8,alpha:a*(1-k3*.88)});});
+    GT('STEP 2 · COPY THIS INTO PLUGIN CREATOR',X0,Y0-54,20,{f:'M',c:P.blueHi,ls:2,alpha:k*(1-k3),glow:.5});
+    x.restore();
+    // Step 3 overlay
+    if(k3>0){
+      stepTag(3,'When it asks, paste the whole tutor prompt.',W/2-560,H/2-30,k3,52);
+      GT('The text inside every section, not just the headings.',W/2-560,H/2+100,30,{c:'#aeb8e6',alpha:k3,glow:.4});}
+  }
+  vignette();
+});
+
+// 8.6 – end : title, then Step 4 and Step 5 swap in underneath
+S(8.6,99,t=>{
+  const lt=t-8.6;bg('#000');floorGlow(t,1,H*.74);
+  const tk=eo(prog(lt,0,.35));
+  font(150,600);x.letterSpacing='-5px';const w1=x.measureText('Adaptive ').width,w2=x.measureText('Tutor').width;x.letterSpacing='0px';
+  const x0=W/2-(w1+w2)/2,ty=H*.46;
+  GT('Adaptive',x0,ty,150,{w:600,ls:-5,blur:lerp(12,0,tk),alpha:tk,glow:.9,c:'#dfe6ff'});
+  const k2=eo(prog(lt,.3,.7));GT('Tutor',x0+w1,ty,150,{w:600,ls:-5,blur:lerp(14,0,k2),alpha:k2,glow:1,c:P.blueHi});
+  x.save();x.shadowColor=GLOW;x.shadowBlur=30;flapDragon(x0+w1+w2+90,ty-110,110,t*FLAP*1.3,{alpha:k2});x.restore();
+  const caps=[[9.1,'STEP 4','Open the link, enable it, then type @Adaptive Tutor in a new chat.'],
+              [9.9,'STEP 5','Test it: “I want to learn about planetary gearsets.”'],
+              [10.8,'IT WORKS IF','it sets a goal and asks how long the session is, before teaching.']];
+  caps.forEach(([a,tag,line],i)=>{const b=i<caps.length-1?caps[i+1][0]:99;const kin=eo(prog(t,a,a+.25)),kout=prog(t,b-.15,b);const al=kin*(1-kout);
+    if(al<=0)return;GT(tag,W/2,H*.62,20,{a:'center',f:'M',c:P.blueHi,ls:4,alpha:al,glow:.6,blur:(1-kin)*6});
+    GT(line,W/2,H*.62+56,36,{a:'center',w:500,alpha:al,glow:.5,blur:(1-kin)*8+kout*6});});
+  GT('Get the prompt free at mentaljineer.pages.dev',W/2,H-70,24,{a:'center',f:'M',c:'#c8d3ff',alpha:prog(t,10.9,11.2),glow:.5});
+  vignette();
+});
+
+function render(t){x.setTransform(1,0,0,1,0,0);x.globalAlpha=1;x.filter='none';x.letterSpacing='0px';x.setLineDash([]);x.globalCompositeOperation='source-over';
+  for(const s of scenes){if(t>=s.a&&t<s.b){s.fn(t);break;}}}
+window.ready=(async()=>{
+  await Promise.all(['400 10px G','500 10px G','600 10px G','700 10px G','800 10px G','900 10px G','500 10px M','600 10px M'].map(f=>document.fonts.load(f)));
+  await Promise.all([load('dw','assets/dragon-mark-white.svg'),load('db','assets/dragon-mark-black.svg')]);
+  buildDragonParts();render(0);return true;})();
+window.render=render;
+</script></body></html>
