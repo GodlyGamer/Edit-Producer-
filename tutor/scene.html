@@ -272,12 +272,36 @@ S(10.87,12.5,t=>{
     flapDragon(px+7+fw/2,350+fh/2+Math.sin(2.5-lt*9)*6,130,lt*FLAP);
     x.restore();x.drawImage(cloudLayer,-(lt*80)%W-200,90);
   } else {
-    // one small step at a time: a staircase rising out of the clouds, dragon on the top step
-    const k=prog(t,11.9,12.5),n=10,bw=(W-160)/n;let top=null;
-    for(let i=0;i<n;i++){const h=(80+i*58)*eback(prog(k,i*.05,i*.05+.4));
-      x.fillStyle=i===n-1?P.blueHi:'#5868c9';rr(80+i*bw+3,900-h,bw-6,h+200,4);x.fill();if(i===n-1)top=[80+i*bw+bw/2,900-h];}
+    // one small step at a time: a stepped castle wall rises out of the clouds,
+    // and the dragon flies up it from the bottom to the top tower
+    const k=prog(t,11.9,12.5),n=10,bw=(W-160)/n,G=900,hOf=i=>80+i*58;
+    const hs=[];for(let i=0;i<n;i++)hs.push(hOf(i)*eback(prog(k,i*.04,i*.04+.35)));
+    for(let i=0;i<n;i++){const h=hs[i],x0=80+i*bw,tower=i===n-1,top=G-h;
+      if(h<=0)continue;
+      const wall=tower?P.blueHi:'#5868c9',mortar=tower?'rgba(36,52,138,.28)':'rgba(6,10,38,.32)';
+      x.save();x.beginPath();x.rect(x0,top,bw+1,H-top);x.clip();
+      x.fillStyle=wall;x.fillRect(x0,top,bw+1,H-top);
+      // stone courses, staggered joints, aligned to the ground so the whole wall reads as one
+      x.strokeStyle=mortar;x.lineWidth=2;const ch=30;
+      for(let y=G+200;y>top-ch;y-=ch){const row=Math.round((G+200-y)/ch);
+        x.beginPath();x.moveTo(x0,y);x.lineTo(x0+bw+1,y);x.stroke();
+        const off=row%2?bw/4:bw*3/4;x.beginPath();x.moveTo(x0+off,y);x.lineTo(x0+off,y-ch);x.stroke();}
+      // shaded riser where this step stands above the previous one
+      if(i>0){const ph=Math.max(0,hs[i-1]);x.fillStyle='rgba(6,10,38,.22)';x.fillRect(x0,top,7,Math.max(0,h-ph));}
+      if(tower){x.fillStyle=P.navy;rr(x0+bw/2-7,top+50,14,46,7);x.fill();}
+      x.restore();
+      // crenellations: two merlons per step
+      x.fillStyle=wall;[.08,.58].forEach(f=>{x.fillRect(x0+bw*f,top-26,bw*.34,27);
+        x.strokeStyle=mortar;x.lineWidth=2;x.strokeRect(x0+bw*f,top-26,bw*.34,27);});}
     x.drawImage(cloudLayer,-200,150);
-    if(k>.55)flapDragon(top[0],top[1]-60,120,t*FLAP,{alpha:prog(k,.55,.7)});
+    // flight path: start below the first step, skim up the battlements, land on the tower
+    const kf=eio(prog(k,.25,1)),last=80+(n-1)*bw+bw/2;
+    if(k>.25){const fxp=lerp(-40,last,kf);
+      // height of the battlements under the dragon, smoothed between steps
+      const ci=clamp((fxp-80)/bw-.5,0,n-1),hUnder=lerp(hOf(Math.floor(ci)),hOf(Math.ceil(ci)),ci-Math.floor(ci));
+      const track=G-hUnder-26-62;
+      const y=lerp(H+90,track,eo(clamp(kf/.35)));   // rises up from below the frame, then skims the wall
+      flapDragon(fxp,y,lerp(150,120,kf),t*FLAP*1.5,{rot:lerp(-.4,0,prog(kf,.75,1))});}
   }
 });
 
