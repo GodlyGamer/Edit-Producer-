@@ -202,9 +202,9 @@ canvas.full{position:absolute;left:0;top:0;width:1440px;height:1080px}
 
   <div id="endL" class="layer">
     <div id="ew" class="abs gl ctr" style="top:616px;font-size:20px;font-weight:600;letter-spacing:.42em;color:#A9DCFF">Ultra Tuition</div>
-    <div id="eQ" class="abs serif ctr" data-dot="#4D8DFF" style="top:664px;font-size:110px;line-height:1;color:#F1F4FA">Are you ready to learn?</div>
+    <div id="eQ" class="abs ctr" data-dot="#4D8DFF" style="top:668px;font-family:'Geist';font-weight:650;font-size:86px;letter-spacing:-.035em;line-height:1.05;color:#F1F4FA">Are you ready to learn?</div>
     <div id="erule" class="abs" style="top:830px;left:720px;width:0"></div>
-    <div id="etype" class="abs mono ctr" style="top:852px;font-size:15px;color:#ECEEF2;letter-spacing:.3em"></div>
+    <div id="etype" class="abs gl ctr" style="top:852px;font-size:16px;color:#ECEEF2;letter-spacing:.34em"></div>
   </div>
  </div>
 
@@ -802,7 +802,7 @@ function s8(t) {
   LeQ.forEach((l, i) => rise(l, spring(t - (i < 3 ? beat(53.5) + i * BT / 4 : beat(54.5) + (i - 3) * BT / 4), 12, .8)));
   const rw = 520 * ease(seg(t, beat(55), beat(56))); const er = $('erule'); er.style.width = rw + 'px'; er.style.left = (720 - rw / 2) + 'px';
   const line = 'Learn · Practise · Papers — out today', n = Math.floor(seg(t, beat(55.5), beat(57.2)) * line.length);
-  $('etype').textContent = line.slice(0, n) + (Math.floor((t - beat(55.5)) / (BT / 2)) % 2 ? '▍' : ' ');
+  $('etype').textContent = line.slice(0, n);
   $('etype').style.opacity = t > beat(55.5) ? 1 : 0;
 }
 
