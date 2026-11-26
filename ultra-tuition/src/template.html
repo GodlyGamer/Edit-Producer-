@@ -288,8 +288,8 @@ const beat = k => DROP + (k - 18) * BT;
 // TB(k) maps a moment written in "old beat" units to its new time; everything between anchors stretches.
 const snapq = t => DROP + Math.round(((t - DROP) / BT) * 4) / 4 * BT;
 const WARP = [[0, 0], [1, .442], [2, 1.404], [3, 2.90], [4, 3.70], [5, 4.57], [6, 5.57], [7, 6.77], [8, 7.77], [9, 8.70], [13, 9.70], [14, 10.20], [17.5, 11.55], [18, 11.80],
-  [20, 12.70], [22, 13.47], [25, 14.55], [26, 14.97], [30, 17.17], [32.5, 17.45], [34, 17.97], [35, 18.45], [36.5, 19.0], [37, 19.20], [38, 19.83], [39, 20.80], [41, 21.60], [42, 22.0],
-  [43, 22.60], [44.5, 23.25], [45, 23.53], [47, 24.50], [50, 25.0], [52, 25.47], [54.5, 26.23], [55.5, 26.93], [58, 27.9]].map(([k, t], i) => [k, i < 2 || k === 58 ? t : snapq(t)]);
+  [20, 12.70], [22, 13.47], [25, 14.55], [26, 14.97], [30, 17.17], [30.5, 17.80], [32.5, 18.2], [34, 18.85], [35, 19.3], [36.5, 19.9], [37, 20.15], [38, 20.80], [39, 21.60], [41, 22.25], [42, 22.60],
+  [44.5, 23.25], [45, 23.53], [47, 24.50], [50, 25.0], [52, 25.47], [54.5, 26.23], [55.5, 26.93], [58, 27.9]].map(([k, t], i) => [k, i < 2 || k === 58 ? t : snapq(t)]);
 function TB(k) { for (let i = 1; i < WARP.length; i++) if (k <= WARP[i][0] || i === WARP.length - 1) { const [k0, t0] = WARP[i - 1], [k1, t1] = WARP[i]; return t0 + (t1 - t0) * (k - k0) / (k1 - k0); } }
 const S = [0, TB(9), TB(18), TB(26), TB(34), TB(38), TB(45), TB(52), DUR];
 const G = 760, CX = 720, ROYAL = 'linear-gradient(155deg,#0A1A6E 0%,#1838C4 48%,#0B1663 100%)';
@@ -782,7 +782,7 @@ function sP(t) {
 // ---------- S6 learn · practise (app) · evolve
 function s6(t) {
   const on = t >= S[5] && t < S[6]; show($('kin'), on); if (!on) return;
-  const b0 = S[5], b1 = TB(39), b2 = TB(43);
+  const b0 = S[5], b1 = TB(39), b2 = S[6] + 1; // EVOLVE removed: the app card runs into the wipe
   show($('pL'), t < b1); show($('pA'), t >= b1 && t < b2); show($('pE'), t >= b2);
   if (t < b1) {
     const k = spring(t - b0, 18, .6);
