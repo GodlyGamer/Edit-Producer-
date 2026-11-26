@@ -4,3 +4,5 @@ node_modules/
 *_silent.mp4
 *_seg*.mp4
 *.pcm
+*.mp4
+!*_web.mp4
