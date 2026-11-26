@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Ultra Tuition Launch</title>
 <style>
+@font-face{font-family:'Geist';src:url(data:font/woff2;base64,__F_GEIST__) format('woff2');font-weight:100 900;font-display:block}
 @font-face{font-family:'Onest';src:url(data:font/woff2;base64,__F_ONEST__) format('woff2');font-weight:100 900;font-display:block}
 @font-face{font-family:'Instrument Serif';font-style:italic;font-weight:400;src:url(data:font/woff2;base64,__F_SERIF__) format('woff2');font-display:block}
 @font-face{font-family:'Martian Mono';font-weight:400;src:url(data:font/woff2;base64,__F_MARTIAN__) format('woff2');font-display:block}
@@ -23,7 +24,8 @@ canvas.full{position:absolute;left:0;top:0;width:1440px;height:1080px}
 .ctr{left:0;right:0;text-align:center}
 .mono{font-family:'Martian Mono',monospace;font-weight:400;letter-spacing:.22em;text-transform:uppercase}
 .serif{font-family:'Instrument Serif',serif;font-style:italic;font-weight:400}
-.heavy{font-family:'Onest',sans-serif;font-weight:800;letter-spacing:-.035em;text-transform:uppercase}
+.heavy{font-family:'Geist',sans-serif;font-weight:800;letter-spacing:-.045em;text-transform:uppercase}
+.gl{font-family:'Geist',sans-serif;font-weight:500;letter-spacing:.3em;text-transform:uppercase}
 .m{display:inline-block;overflow:hidden;vertical-align:top;padding:.04em .14em .14em;margin:0 -.14em}
 .l{display:inline-block}
 .panel{position:absolute;inset:0;overflow:hidden}
@@ -53,9 +55,9 @@ canvas.full{position:absolute;left:0;top:0;width:1440px;height:1080px}
 #lamp{position:absolute;inset:0;background:radial-gradient(50% 40% at 50% 12%,rgba(220,232,255,.08),rgba(220,232,255,0) 70%)}
 
 /* kinetic + product */
-.rowp{position:absolute;left:-400px;font-family:'Onest';font-weight:800;font-size:190px;line-height:1;letter-spacing:-.035em;color:transparent;-webkit-text-stroke:2px rgba(77,141,255,.45);white-space:nowrap}
+.rowp{position:absolute;left:-400px;font-family:'Geist';font-weight:800;font-size:190px;line-height:1;letter-spacing:-.035em;color:transparent;-webkit-text-stroke:2px rgba(77,141,255,.45);white-space:nowrap}
 .cnr{position:absolute;width:80px;height:80px;border:0 solid #4D8DFF}
-#bar{position:absolute;left:0;bottom:0;width:1440px;height:1080px;background:#1D47D6;transform-origin:50% 100%}
+#bar{position:absolute;left:0;bottom:0;width:1440px;height:1080px;background:linear-gradient(155deg,#0A1A6E 0%,#1838C4 48%,#0B1663 100%);transform-origin:50% 100%}
 #bdot{display:inline-block;width:.2em;height:.2em;border-radius:50%;background:#A9DCFF;margin-left:.03em;vertical-align:baseline}
 #appWrap{position:absolute;inset:0;perspective:1700px}
 .card{position:absolute;left:230px;top:0;width:980px;height:1079px;border-radius:26px;overflow:hidden;transform-origin:50% 50%}
@@ -69,6 +71,14 @@ canvas.full{position:absolute;left:0;top:0;width:1440px;height:1080px}
 #aRing{position:absolute;left:214px;top:714px;width:60px;height:60px;margin:-30px 0 0 -30px;border-radius:50%;border:2px solid #4D8DFF}
 #cursor{position:absolute;left:0;top:0;width:34px;height:34px}
 
+/* paper */
+#paper{position:absolute;left:0;top:0;width:1440px;height:1400px;transform-origin:0 0;background-color:#F4F1E9;
+  background-image:linear-gradient(90deg,transparent 229px,rgba(214,86,86,.55) 229px,rgba(214,86,86,.55) 232px,transparent 232px),repeating-linear-gradient(180deg,transparent 0 118px,rgba(110,150,210,.42) 118px 120px)}
+#paperTex{position:absolute;inset:0;background-size:512px 512px;mix-blend-mode:multiply;opacity:.55}
+.pl{position:absolute;left:262px;font-family:'Caveat','Kalam',cursive;font-weight:700;font-size:100px;line-height:1;color:#1E2F8C;padding:10px 18px;white-space:nowrap}
+#pDood{position:absolute;left:0;top:0;overflow:visible}
+#pDood path{fill:none;stroke:#1E2F8C;stroke-width:5;stroke-linecap:round;stroke-dasharray:1 1}
+#pPen{position:absolute;width:300px;height:300px}
 /* end */
 #erule{height:2px;background:#ECEEF2}
 #vig{position:absolute;inset:0;background-size:100% 100%}
@@ -94,7 +104,7 @@ canvas.full{position:absolute;left:0;top:0;width:1440px;height:1080px}
   <canvas id="back" class="full" width="1440" height="1080"></canvas>
 
   <div id="c1" class="layer">
-    <div id="lab0" class="abs mono ctr" style="top:716px;font-size:15px;color:#FFB27A">ultra tuition / launch — 2026</div>
+    <div id="lab0" class="abs gl ctr" style="top:714px;font-size:16px;color:#FFB27A">Ultra Tuition / launch — 2026</div>
     <div id="k1" class="abs mono ctr" style="top:96px;font-size:15px;color:#FFC79E">Chapter 01 — Evolution</div>
     <div id="h1" class="abs serif ctr" data-dot="#FF5A1F" style="top:124px;font-size:112px;line-height:1;color:#F6EDE2">We were built to learn.</div>
     <div id="figlabs"></div>
@@ -109,6 +119,22 @@ canvas.full{position:absolute;left:0;top:0;width:1440px;height:1080px}
     <div id="h3b" class="abs heavy ctr" data-dot="#4D8DFF" style="top:870px;font-size:100px;line-height:1;color:#FFFFFF">Big effects.</div>
   </div>
 
+  <div id="paperL" class="layer" style="overflow:hidden">
+    <div id="paper"><div id="paperTex"></div>
+      <div class="pl" id="p1" style="top:270px">a² + b² = c²</div>
+      <div class="pl" id="p2" style="top:390px">3² + 4² = c²</div>
+      <div class="pl" id="p3" style="top:510px">9 + 16 = c²</div>
+      <div class="pl" id="p4" style="top:630px">c² = 25</div>
+      <div class="pl" id="p5" style="top:750px">c = √25 = <span id="pAns">5</span></div>
+      <svg id="pDood" width="1440" height="1400" viewBox="0 0 1440 1400"><path id="pCirc" pathLength="1" d="M0 0"/></svg>
+      <svg id="pPen" viewBox="0 0 300 300"><line x1="58" y1="248" x2="296" y2="10" stroke="rgba(0,0,0,.16)" stroke-width="30" stroke-linecap="round" transform="translate(16 18)"/>
+        <polygon points="6,294 22,250 50,278" fill="#C9CDD6"/><polygon points="6,294 13,276 24,287" fill="#1E2F8C"/>
+        <line x1="40" y1="262" x2="104" y2="198" stroke="#2E3546" stroke-width="34" stroke-linecap="round"/>
+        <line x1="96" y1="206" x2="282" y2="20" stroke="#14182A" stroke-width="32" stroke-linecap="round"/>
+        <line x1="110" y1="180" x2="270" y2="20" stroke="rgba(255,255,255,.22)" stroke-width="6" stroke-linecap="round"/>
+        <rect x="150" y="70" width="70" height="12" rx="4" fill="#C9CDD6" transform="rotate(-45 185 76)"/></svg>
+    </div>
+  </div>
   <div id="roomL" class="layer" style="overflow:hidden">
     <div id="room">
       <div id="wall"></div>
@@ -119,7 +145,7 @@ canvas.full{position:absolute;left:0;top:0;width:1440px;height:1080px}
           <div class="eq" id="e3" style="left:30px;top:346px">e<sup>iπ</sup> + 1 = 0</div>
           <div class="eq" id="e4" style="left:30px;top:500px">∫<span class="lim"><i>∞</i><i>−∞</i></span>e<sup>−x²</sup> dx = √π</div>
           <div class="eq" id="e5" style="left:650px;top:6px;font-size:104px">F = ma</div>
-          <div class="eq" id="e6" style="left:540px;top:364px;font-size:92px">Ultra Tuition</div>
+          <div class="eq" id="e6" style="left:540px;top:378px;font-size:80px;font-family:'Geist';font-weight:700;letter-spacing:-.02em">Ultra Tuition</div>
           <svg id="dood" width="1192" height="732" viewBox="0 0 1192 732">
             <path id="dTri" pathLength="1" d="M820 660 L990 660 L820 545 Z M820 636 L844 636 L844 660"/>
             <path id="dAx" pathLength="1" d="M690 160 L690 336 L1150 336"/>
@@ -139,7 +165,7 @@ canvas.full{position:absolute;left:0;top:0;width:1440px;height:1080px}
   <div id="kin" class="layer">
     <div id="pL" class="panel" style="background:#ECEEF2">
       <div id="tL" class="abs mono ctr" style="top:384px;font-size:16px;color:#0B1220">01 — Learn</div>
-      <div id="wL" class="abs heavy ctr" style="top:420px;font-size:260px;line-height:1;color:#0B1220">Learn<span id="dL" style="color:#1D47D6;display:inline-block">.</span></div>
+      <div id="wL" class="abs heavy ctr" style="top:420px;font-size:260px;line-height:1;color:#0B1220">Learn<span id="dL" style="color:#1838C4;display:inline-block">.</span></div>
     </div>
     <div id="pA" class="panel" style="background:#050608">
       <div id="pat"></div>
@@ -157,14 +183,8 @@ canvas.full{position:absolute;left:0;top:0;width:1440px;height:1080px}
       <div id="tA" class="abs mono" style="left:62px;top:96px;font-size:15px;color:#A9DCFF;line-height:1.9">02 — Practise<br><span style="color:#ECEEF2;opacity:.6">one step at a time</span></div>
     </div>
     <div id="pE" class="panel" style="background:#0B1220">
-      <i class="cnr" id="q1" style="border-left-width:4px;border-top-width:4px"></i>
-      <i class="cnr" id="q2" style="border-right-width:4px;border-top-width:4px"></i>
-      <i class="cnr" id="q3" style="border-left-width:4px;border-bottom-width:4px"></i>
-      <i class="cnr" id="q4" style="border-right-width:4px;border-bottom-width:4px"></i>
-      <div id="eLab" class="abs mono" style="left:236px;top:250px;font-size:14px;color:#fff;opacity:.8">1440 × 1080</div>
-      <div id="eRec" class="abs mono" style="right:236px;top:250px;font-size:14px;color:#fff;opacity:.8">REC <b style="display:inline-block;width:11px;height:11px;border-radius:50%;background:#FF2D2D;vertical-align:0"></b></div>
-      <div id="tE" class="abs mono ctr" style="top:250px;font-size:16px;color:#fff">03 — Evolve</div>
-      <div id="wE" class="abs ctr" style="top:320px;font-family:'Caveat';font-weight:700;font-size:300px;line-height:1.05;color:#fff"><span id="wEi" style="display:inline-block;padding:40px 30px">evolve.</span></div>
+      <div id="tE" class="abs mono ctr" style="top:384px;font-size:16px;color:#A9C2FF">03 — Evolve</div>
+      <div id="wE" class="abs heavy ctr" data-dot="#3D63E8" style="top:420px;font-size:240px;line-height:1;color:#fff">Evolve.</div>
     </div>
     <div id="bar"></div>
   </div>
@@ -181,7 +201,7 @@ canvas.full{position:absolute;left:0;top:0;width:1440px;height:1080px}
   <canvas id="front" class="full" width="1440" height="1080"></canvas>
 
   <div id="endL" class="layer">
-    <div id="ew" class="abs mono ctr" style="top:618px;font-size:18px;letter-spacing:.42em;color:#A9DCFF">Ultra Tuition</div>
+    <div id="ew" class="abs gl ctr" style="top:616px;font-size:20px;font-weight:600;letter-spacing:.42em;color:#A9DCFF">Ultra Tuition</div>
     <div id="eQ" class="abs serif ctr" data-dot="#4D8DFF" style="top:664px;font-size:110px;line-height:1;color:#F1F4FA">Are you ready to learn?</div>
     <div id="erule" class="abs" style="top:830px;left:720px;width:0"></div>
     <div id="etype" class="abs mono ctr" style="top:852px;font-size:15px;color:#ECEEF2;letter-spacing:.3em"></div>
@@ -191,13 +211,6 @@ canvas.full{position:absolute;left:0;top:0;width:1440px;height:1080px}
   <div id="vig"></div>
   <div id="grain" class="layer"></div>
 
-  <div id="hud" class="layer">
-    <i class="cb tl"></i><i class="cb tr"></i><i class="cb bl"></i><i class="cb br"></i>
-    <div id="hB" class="abs" style="top:48px;left:56px">Ultra Tuition</div>
-    <div id="hS" class="abs" style="top:48px;right:56px">Scene 01 / 08</div>
-    <div id="hC" class="abs" style="bottom:46px;left:56px">Evolution</div>
-    <div id="hT" class="abs" style="bottom:46px;right:56px"><b></b><span>00:00.00</span></div>
-  </div>
 </div>
 
 <div id="ui" style="display:none">
@@ -208,7 +221,10 @@ canvas.full{position:absolute;left:0;top:0;width:1440px;height:1080px}
 
 <script>
 /* ============================================================================
-   ULTRA TUITION — launch promo · 4:3 · 1440×1080 · 27.9 s · music: user track (B♭ minor, 124.8 BPM)
+   ULTRA TUITION — launch promo · 4:3 · 1440×1080 · 27.9 s · soundtrack: the user's track only (B♭ minor, 124.8 BPM)
+   v3: no HUD, no added sound effects; human sprints off before the blast (beat 6); equations fly off the wings
+   on each downstroke; beats 26–30 pen working on paper, whip-pan up to the board on 30; Geist for display type.
+   (The sound column below is from v2 and no longer applies.)
    Beat grid: beat(k) = 8.617 + (k-18)·0.4809 s. Every cut, entrance and camera bump sits on this grid;
    a global camera pulse hits every beat (soft in the intro, harder from the drop at beat 18).
 
@@ -275,7 +291,7 @@ window.VIDEO = { w: W, h: H, duration: DUR };
 const BT = 0.4809, DROP = 8.617;
 const beat = k => DROP + (k - 18) * BT;
 const S = [0, beat(9), DROP, beat(26), beat(34), beat(38), beat(45), beat(52), DUR];
-const G = 760, CX = 720;
+const G = 760, CX = 720, ROYAL = 'linear-gradient(155deg,#0A1A6E 0%,#1838C4 48%,#0B1663 100%)';
 const CAT = ['Evolution', 'Energy · slow motion', 'Nature · slow motion', 'Equations', 'The board', 'Learn · Practise', 'Brand', 'Signature'];
 // beat pulse (0..1) from the most recent beat, decaying over d seconds
 function beatPulse(t, d = .12) { const k = Math.floor((t - beat(0)) / BT); return k < 1 ? 0 : pulse(t, beat(k), d); }
@@ -329,7 +345,8 @@ const STEM = Array.from({ length: 70 }, () => ({ h0: R0(), xj: R0() * 2 - 1, s: 
 const BASE = Array.from({ length: 120 }, () => ({ ps: R0() * 6.283, rf: .62 + R0() * .42, s: .6 + R0() * .8, v: (R0() * 3) | 0 }));
 const EMB = Array.from({ length: 170 }, () => ({ x: R0() * 2 - 1, o: R0(), v: .08 + R0() * .16, h: .5 + R0() * .9, s: 1.4 + R0() * 3, c: R0() }));
 const BOKEH = Array.from({ length: 38 }, () => ({ x: R0() * W, y: R0() * H, d: .3 + R0() * .7, s: 70 + R0() * 240, c: (R0() * 3) | 0, a: .1 + R0() * .2, f: R0() * 6 }));
-const SPARK = Array.from({ length: 96 }, (_, i) => ({ b: 9.0 + i * .031, side: i % 2 ? 1 : -1, j: R0() * 2 - 1, k: R0(), s: 2 + R0() * 3.5 }));
+const EQS = ['E=mc²', 'π', '∫', '√2', 'x²', 'a²+b²', 'F=ma', '∞', 'πr²', 'dy/dx', '½mv²', 'y=mx+c', 'c²', 'f(x)', '3.14', '1+1=2'];
+const EQP = []; for (let k = 19; k <= 25; k++) for (let j = 0; j < 4; j++) EQP.push({ b: beat(k) + j * .09, side: j % 2 ? 1 : -1, txt: EQS[(k * 4 + j) % EQS.length], ang: (R0() - .5) * 1.8, sp: 260 + R0() * 260, up: 60 + R0() * 220, rot: (R0() - .5) * .5, vr: (R0() - .5) * .5, size: 28 + R0() * 22, mix: .45 + R0() * .45 });
 const ROUTE = [[140, 930], [190, 790], [160, 640], [290, 520], [420, 430]];
 
 // butterfly background (deep navy, brand blues)
@@ -370,6 +387,10 @@ function texVignette() {
 $('surf').style.backgroundImage = `url(${texBoard()})`;
 { const m = `url(${texChalkMask()})`; $('chalk').style.webkitMaskImage = m; $('chalk').style.maskImage = m; }
 $('vig').style.backgroundImage = `url(${texVignette()})`;
+{ const c = document.createElement('canvas'); c.width = c.height = 512; const g = c.getContext('2d'), Rp = rng(23), id = g.createImageData(512, 512), d = id.data;
+  for (let i = 0; i < d.length; i += 4) { const v = 236 + Rp() * 19; d[i] = v; d[i + 1] = v - 1; d[i + 2] = v - 4; d[i + 3] = 255; } g.putImageData(id, 0, 0);
+  for (let i = 0; i < 26; i++) { g.globalAlpha = .05; g.drawImage(GL.cream, Rp() * 512 - 150, Rp() * 512 - 150, 300, 300); }
+  $('paperTex').style.backgroundImage = `url(${c.toDataURL()})`; }
 const GRAIN = [11, 12, 13, 14].map(s => { const d = document.createElement('div'); d.className = 'gr'; d.style.backgroundImage = `url(${texGrain(s)})`; $('grain').appendChild(d); return d; });
 
 { let d = ''; for (let x = 700; x <= 1140; x += 8) d += (x === 700 ? 'M' : 'L') + x + ' ' + (248 - 60 * Math.sin((x - 700) / 440 * Math.PI * 3)).toFixed(1) + ' '; $('dSin').setAttribute('d', d); }
@@ -390,7 +411,7 @@ function split(el, mode) {
   return out;
 }
 const L1 = split($('h1')), L2 = split($('h2'), 'c'), L3a = split($('h3a')), L3b = split($('h3b'), 'c');
-const Lb1 = split($('bw1'), 'c'), Lb2 = split($('bw2t'), 'c'), LeQ = split($('eQ'));
+const LeE = split($('wE'), 'c'), Lb1 = split($('bw1'), 'c'), Lb2 = split($('bw2t'), 'c'), LeQ = split($('eQ'));
 const rise = (l, k, d = 115) => { l.style.transform = `translateY(${((1 - k) * d).toFixed(2)}%)`; };
 
 const FIG = [{ p: 0, sc: .76, cx: 250, n: 'Australopithecus' }, { p: .3, sc: .8, cx: 485, n: 'Homo habilis' }, { p: .56, sc: .84, cx: 720, n: 'Homo erectus' }, { p: .84, sc: .88, cx: 955, n: 'Homo sapiens' }, { p: 1, sc: .9, cx: 1190, n: 'You' }];
@@ -399,34 +420,38 @@ const PAT = Array.from({ length: 7 }, (_, i) => { const d = document.createEleme
 
 // ---------- layout measured once fonts are ready
 let LAY = null;
-const FONTS = ['800 100px Onest', 'italic 100px "Instrument Serif"', '100px "Martian Mono"', '100px "JB Mono"', '700 100px Caveat', '700 100px Kalam'];
+const FONTS = ['800 100px Geist', '800 100px Onest', 'italic 100px "Instrument Serif"', '100px "Martian Mono"', '100px "JB Mono"', '700 100px Caveat', '700 100px Kalam'];
 FONTS.forEach(f => document.fonts.load(f).catch(() => {}));
 const BB = k => beat(k);
 // chalk schedule on the beat grid (whole and half beats)
-const WR = [['e1', BB(26), BB(27)], ['e2', BB(27), BB(28)], ['dTri', BB(28), BB(28.5)], ['e3', BB(28.5), BB(29.5)], ['e4', BB(29.5), BB(30.75)],
-  ['e5', BB(30.75), BB(31.5)], ['dAx', BB(31.5), BB(31.875)], ['dSin', BB(31.875), BB(32.75)],
+const WR = [['e1', 0, .001], ['e2', 0, .001], ['e3', 0, .001], ['e4', 0, .001], ['e5', BB(30.5), BB(31.25)], ['dAx', BB(31.25), BB(31.5)], ['dSin', BB(31.5), BB(32.25)], ['dTri', BB(32.25), BB(32.5)],
   ['dCirc', BB(34), BB(35)], ['e6', BB(35), BB(36.5)], ['dUnder', BB(36.5), BB(37) - .02]];
+const PWR = [['p1', BB(26), BB(26.75)], ['p2', BB(26.75), BB(27.5)], ['p3', BB(27.5), BB(28.25)], ['p4', BB(28.25), BB(28.75)], ['p5', BB(28.75), BB(29.5)], ['pCirc', BB(29.5), BB(30)]];
+const BOARD0 = beat(30), CAMA = [600, 470];
 const SURF = [124, 134];
 function layoutOnce() {
   if (LAY) return;
   if (!FONTS.every(f => document.fonts.check(f)) || !ORB.complete) return;
-  const keep = ['roomL', 'brandL', 'endL'].map(id => [id, $(id).style.display]);
+  const keep = ['roomL', 'paperL', 'brandL', 'endL'].map(id => [id, $(id).style.display]);
   keep.forEach(([id]) => $(id).style.display = 'block');
   LAY = {};
   $('bw1').style.fontVariationSettings = $('bw2').style.fontVariationSettings = "'wght' 800";
   const w2 = $('bw2').offsetWidth; const fs = 210 * 900 / w2; $('bw1').style.fontSize = $('bw2').style.fontSize = fs + 'px';
   let el = $('bdot'), x = 0, y = 0; for (let e = el; e && e !== stage && e !== $('cam'); e = e.offsetParent) { x += e.offsetLeft; y += e.offsetTop; }
   LAY.dot = [x + el.offsetWidth / 2, y + el.offsetHeight / 2, el.offsetWidth / 2];
-  LAY.items = WR.map(([id, t0, t1]) => {
+  { const a = $('pAns'), p5 = $('p5'); const x = p5.offsetLeft + a.offsetLeft + a.offsetWidth / 2, y = p5.offsetTop + a.offsetTop + a.offsetHeight * .56, rx = a.offsetWidth * .5 + 30, ry = a.offsetHeight * .48;
+    let d = '', Rr = rng(17); for (let i = 0; i <= 56; i++) { const an = -2.2 + i / 56 * 6.283 * 1.1, w = 1 + (Rr() - .5) * .04; d += (i ? 'L' : 'M') + (x + Math.cos(an) * rx * w).toFixed(1) + ' ' + (y + Math.sin(an) * ry * w - i * .25).toFixed(1) + ' '; } $('pCirc').setAttribute('d', d); }
+  const mk = (list, pad) => list.map(([id, t0, t1]) => {
     const e = $(id);
     if (e.tagName === 'path') { const len = e.getTotalLength(); const pts = Array.from({ length: 121 }, (_, i) => { const p = e.getPointAtLength(len * i / 120); return [p.x, p.y]; }); return { id, e, t0, t1, path: pts }; }
-    return { id, e, t0, t1, x: e.offsetLeft + 20, y: e.offsetTop + e.offsetHeight * .6, w: e.offsetWidth - 40 };
+    return { id, e, t0, t1, x: e.offsetLeft + pad, y: e.offsetTop + e.offsetHeight * .62, w: e.offsetWidth - 2 * pad };
   });
+  LAY.items = mk(WR, 20); LAY.pitems = mk(PWR, 18);
   const e6 = $('e6'); LAY.bdot2 = [e6.offsetLeft + e6.offsetWidth - 8, e6.offsetTop + e6.offsetHeight * .76];
-  const t0 = 12.3, t1 = 18.3, dt = 1 / 240, n = Math.ceil((t1 - t0) / dt) + 1; const fx = new Float32Array(n), fy = new Float32Array(n);
-  let p0 = penAt(BB(26)), cx = p0.x + 150, cy = p0.y, vx = 0, vy = 0; const om = 6.5;
+  const t0 = BOARD0, t1 = 18.3, dt = 1 / 240, n = Math.ceil((t1 - t0) / dt) + 1; const fx = new Float32Array(n), fy = new Float32Array(n);
+  let cx = CAMA[0], cy = CAMA[1], vx = 0, vy = 0; const om = 6.5;
   for (let i = 0; i < n; i++) {
-    const tg = penAt(t0 + i * dt); const tx = tg.x + 150, ty = tg.y;
+    const tt = t0 + i * dt, tg = penAt(tt); const tx = tt < beat(30.6) ? CAMA[0] : tg.x + 150, ty = tt < beat(30.6) ? CAMA[1] : tg.y;
     vx += (om * om * (tx - cx) - 2 * om * vx) * dt; vy += (om * om * (ty - cy) - 2 * om * vy) * dt; cx += vx * dt; cy += vy * dt;
     fx[i] = cx; fy[i] = cy;
   }
@@ -437,29 +462,30 @@ function itemPt(it, p) {
   if (it.path) { const f = clamp(p) * 120, i = Math.min(119, Math.floor(f)), k = f - i; return { x: lerp(it.path[i][0], it.path[i + 1][0], k), y: lerp(it.path[i][1], it.path[i + 1][1], k) }; }
   return { x: it.x + it.w * clamp(p), y: it.y };
 }
-function penAt(t) {
-  const its = LAY.items; let prev = null;
+function penOn(its, t, ox = 0, oy = 0) {
+  let prev = null;
   for (const it of its) {
-    if (t < it.t0) { if (!prev) { const a = itemPt(it, 0); return { x: a.x + SURF[0], y: a.y + SURF[1] }; } const a = itemPt(prev, 1), b = itemPt(it, 0), k = smooth(seg(t, prev.t1, it.t0)); return { x: lerp(a.x, b.x, k) + SURF[0], y: lerp(a.y, b.y, k) + SURF[1] }; }
-    if (t <= it.t1) { const a = itemPt(it, (t - it.t0) / (it.t1 - it.t0)); return { x: a.x + SURF[0], y: a.y + SURF[1], on: true }; }
+    if (t < it.t0) { if (!prev) { const a = itemPt(it, 0); return { x: a.x + ox, y: a.y + oy }; } const a = itemPt(prev, 1), b = itemPt(it, 0), k = smooth(seg(t, prev.t1, it.t0)); return { x: lerp(a.x, b.x, k) + ox, y: lerp(a.y, b.y, k) + oy }; }
+    if (t <= it.t1) { const a = itemPt(it, (t - it.t0) / (it.t1 - it.t0)); return { x: a.x + ox, y: a.y + oy, on: true }; }
     prev = it;
   }
-  const a = itemPt(prev, 1); return { x: a.x + SURF[0], y: a.y + SURF[1] };
+  const a = itemPt(prev, 1); return { x: a.x + ox, y: a.y + oy };
 }
+const penAt = t => penOn(LAY.items, t, SURF[0], SURF[1]);
 function camAt(t) { const C = LAY.cam; const f = clamp((t - C.t0) / C.dt, 0, C.n - 1.001), i = Math.floor(f), k = f - i; return { x: lerp(C.fx[i], C.fx[i + 1], k), y: lerp(C.fy[i], C.fy[i + 1], k) }; }
 
 function grid(c, a) { if (a <= 0.002) return; c.strokeStyle = `rgba(255,255,255,${a})`; c.lineWidth = 1; c.beginPath(); for (let x = 0; x <= W; x += 90) { c.moveTo(x + .5, 0); c.lineTo(x + .5, H); } for (let y = 0; y <= H; y += 90) { c.moveTo(0, y + .5); c.lineTo(W, y + .5); } c.stroke(); }
 
-function drawFigure(c, x, p, ph, sc, you) {
+function drawFigure(c, x, p, ph, sc, you, run = 0) {
   const L = (a, b) => lerp(a, b, p);
   const th = L(54, 82) * sc, sh = L(50, 80) * sc, tor = L(98, 114) * sc, neck = L(10, 22) * sc, hr = L(21, 23.5) * sc;
   const legW = L(25, 21) * sc, armW = L(19, 14) * sc, chestW = L(56, 40) * sc, hipW = L(44, 34) * sc;
-  const lean = L(1.0, .04), A = L(.3, .42);
-  const legs = [0, 1].map(i => { const f = ph + i * Math.PI; const a1 = L(.32, 0) + A * Math.sin(f); const bend = L(.5, .1) + .6 * Math.max(0, Math.sin(f + 1.5)); const a2 = a1 - bend; const kx = th * Math.sin(a1), ky = th * Math.cos(a1); return { kx, ky, fx: kx + sh * Math.sin(a2), fy: ky + sh * Math.cos(a2) }; });
-  const hy = G - Math.max(legs[0].fy, legs[1].fy) - legW * .45;
+  const lean = L(1.0, .04) + .32 * run, A = lerp(L(.3, .42), .95, run);
+  const legs = [0, 1].map(i => { const f = ph + i * Math.PI; const a1 = L(.32, 0) + A * Math.sin(f); const bend = L(.5, .1) + (.6 + .8 * run) * Math.max(0, Math.sin(f + 1.5)); const a2 = a1 - bend; const kx = th * Math.sin(a1), ky = th * Math.cos(a1); return { kx, ky, fx: kx + sh * Math.sin(a2), fy: ky + sh * Math.cos(a2) }; });
+  const hy = G - Math.max(legs[0].fy, legs[1].fy) - legW * .45 - run * 16 * Math.abs(Math.sin(ph));
   const sx = x + tor * Math.sin(lean), sy = hy - tor * Math.cos(lean);
   const na = L(1.2, .08); const hx = sx + (neck + hr * .8) * Math.sin(na), hh = sy - (neck + hr * .8) * Math.cos(na);
-  const arms = [0, 1].map(i => { const f = ph + i * Math.PI; const a = L(.55, 0) - L(.22, .38) * Math.sin(f) * (you && i === 0 ? .25 : 1); const eb = L(.15, .38) + (you && i === 0 ? 1.25 : 0); const ua = L(74, 60) * sc, fa = L(76, 54) * sc; const ex = sx + ua * Math.sin(a), ey = sy + ua * Math.cos(a); return { ex, ey, hx: ex + fa * Math.sin(a + eb), hy: ey + fa * Math.cos(a + eb) }; });
+  const arms = [0, 1].map(i => { const f = ph + i * Math.PI; const a = L(.55, 0) + .2 * run - lerp(L(.22, .38), 1.0, run) * Math.sin(f) * (you && i === 0 ? lerp(.25, 1, run) : 1); const eb = lerp(L(.15, .38) + (you && i === 0 ? 1.25 : 0), 1.55, run); const ua = L(74, 60) * sc, fa = L(76, 54) * sc; const ex = sx + ua * Math.sin(a), ey = sy + ua * Math.cos(a); return { ex, ey, hx: ex + fa * Math.sin(a + eb), hy: ey + fa * Math.cos(a + eb) }; });
   c.lineCap = 'round'; c.lineJoin = 'round'; c.strokeStyle = c.fillStyle = '#050407';
   const limb = (ax, ay, bx, by, cx2, cy2, w) => { c.lineWidth = w; c.beginPath(); c.moveTo(ax, ay); c.lineTo(bx, by); c.lineTo(cx2, cy2); c.stroke(); };
   for (const l of legs) { limb(x, hy, x + l.kx, hy + l.ky, x + l.fx, hy + l.fy, legW); c.lineWidth = legW * .55; c.beginPath(); c.moveTo(x + l.fx - 2, hy + l.fy + legW * .2); c.lineTo(x + l.fx + L(16, 20) * sc, hy + l.fy + legW * .25); c.stroke(); }
@@ -514,11 +540,13 @@ function s1(t) {
   if (fade > 0) { c.save(); c.globalCompositeOperation = 'lighter'; sprite(c, GL.ember, CX, G, (70 + 300 * pk) * sp * fade, null, .9); c.fillStyle = '#FFE8D2'; c.beginPath(); c.arc(CX, G, (4 + 5 * pk) * sp * fade, 0, 7); c.fill(); c.restore(); }
   const drift = 18 * Math.max(0, t - 1.4);
   for (let i = 0; i < 5; i++) {
-    const f = FIG[i], k = spring(t - beat(3 + i), 12, .78); const a = clamp(k * 1.5);
-    FLAB[i].style.opacity = a; FLAB[i].style.transform = `translateX(calc(-50% + ${(drift - 40 * (1 - k)).toFixed(1)}px))`;
+    const f = FIG[i], k = spring(t - beat(2.5 + i * .5), 12, .78); const a = clamp(k * 1.5);
+    // the modern human breaks into a sprint on beat 6 and leaves frame before the flash
+    const run = i === 4 ? smooth(seg(t, beat(6), beat(6.6))) : 0, rt = i === 4 ? Math.max(0, t - beat(6)) : 0, dx = 520 * rt * rt;
+    FLAB[i].style.opacity = a * (i === 4 ? 1 - seg(t, beat(6), beat(6.4)) : 1); FLAB[i].style.transform = `translateX(calc(-50% + ${(drift - 40 * (1 - k)).toFixed(1)}px))`;
     if (a <= .001) continue;
-    const ph = (t - beat(0)) / (4 * BT) * Math.PI * 2 + i * Math.PI / 2; // footfalls land on every other beat
-    c.globalAlpha = a; drawFigure(c, f.cx - lerp(52, 9, f.p) + drift - 40 * (1 - k), f.p, ph, f.sc, i === 4); c.globalAlpha = 1;
+    const ph = (t - beat(0)) / (4 * BT) * Math.PI * 2 + i * Math.PI / 2 + 2 * Math.PI * 1.6 * rt * rt;
+    c.globalAlpha = a; drawFigure(c, f.cx - lerp(52, 9, f.p) + drift - 40 * (1 - k) + dx, f.p, ph, f.sc, i === 4, run); c.globalAlpha = 1;
   }
   if (kb > 0) { c.fillStyle = `rgba(255,248,236,${kb * kb})`; c.fillRect(0, 0, W, H); }
   const lab = $('lab0'), n = Math.round(29 * seg(t, beat(1) + .06, beat(2) - .06));
@@ -622,9 +650,21 @@ function s3(t) {
   for (const b of BOKEH) { const y = ((b.y - 30 * b.d * u) % H + H) % H, x = b.x + 12 * b.d * u + 20 * Math.sin(u * .5 + b.f); sprite(c, BK[b.c], x, y, b.s * b.d * (1 + .12 * bp), null, b.a * (.8 + .2 * Math.sin(u * 1.3 + b.f)) * (1 + .6 * bp)); }
   c.restore();
   const P = bpose(t);
-  c.save(); c.globalCompositeOperation = 'lighter';
-  for (const s of SPARK) { const age = t - s.b; if (age < 0 || age > 1.5 || s.b > beat(25.5)) continue; const [x0, y0] = tipWorld(s.b, s.side); const x = x0 + (s.side * 26 + s.j * 22) * age, y = y0 + 70 * age + s.j * 10 * age; const a = Math.pow(1 - age / 1.5, 1.5) * (.6 + .4 * Math.sin(age * 22 + s.k * 9)); sprite(c, s.k < .5 ? GL.cream : GL.ice, x, y, s.s * 7, null, a * .9); c.fillStyle = `rgba(255,252,245,${a})`; c.fillRect(x - s.s * .3, y - s.s * .3, s.s * .6, s.s * .6); }
-  c.restore();
+  // equations spin off the wings on every downstroke (kick), drifting out in slow motion
+  const zf = 1 + 5 * eInExpo(seg(t, beat(25.4), S[3]));
+  c.save(); c.textAlign = 'center'; c.textBaseline = 'middle'; c.shadowColor = 'rgba(169,220,255,.85)'; c.shadowBlur = 14; c.fillStyle = '#F1F6FF';
+  for (const q of EQP) {
+    const age = t - q.b; if (age < 0 || age > 2.6) continue;
+    const P0 = bpose(q.b), [tx, ty] = tipWorld(q.b, q.side), ox = lerp(P0.x, tx, q.mix), oy = lerp(P0.y, ty, q.mix);
+    const d = (1 - Math.exp(-age * 1.1)) / 1.1;
+    let x = ox + q.side * q.sp * Math.cos(q.ang) * d, y = oy - q.up * d + q.sp * Math.sin(q.ang) * d * .5;
+    x = 720 + (x - 720) * zf; y = 540 + (y - 540) * zf;
+    const a = smooth(age / .12) * (1 - smooth((age - 1.6) / 1.0)) * (1 - seg(t, beat(25.8), S[3]));
+    if (a <= .003) continue;
+    c.globalAlpha = a; c.save(); c.translate(x, y); c.rotate(q.rot + q.vr * age); const k2 = (.6 + .4 * smooth(age / .3)) * zf; c.scale(k2, k2);
+    c.font = `700 ${q.size.toFixed(1)}px Kalam`; c.fillText(q.txt, 0, 0); c.restore();
+  }
+  c.restore(); c.globalAlpha = 1;
   const em = 1 - seg(t, S[2] + .05, S[2] + .8);
   if (em > 0) { c.save(); c.globalCompositeOperation = 'lighter'; sprite(c, GL.ember, P.x, P.y, 420 * em, null, em); sprite(c, GL.hot, P.x, P.y, 120 * em, null, em); c.restore(); }
   drawButterfly(c, P);
@@ -632,7 +672,7 @@ function s3(t) {
   sprite(c, GL.deep, 140 + 30 * u, 980 - 20 * u, 700, null, .2); sprite(c, GL.brand, 1330 - 25 * u, 160 + 10 * u, 600, null, .14);
   c.restore();
   const wf = Math.exp(-u * 4.2); if (wf > .002) { c.fillStyle = `rgba(255,248,238,${wf})`; c.fillRect(0, 0, W, H); }
-  const dk = eIn3(seg(t, beat(25.2), S[3])); if (dk > 0) { c.fillStyle = `rgba(18,26,22,${dk})`; c.fillRect(0, 0, W, H); }
+  const dk = eIn3(seg(t, beat(25.5), S[3])); if (dk > 0) { c.fillStyle = `rgba(244,241,233,${dk})`; c.fillRect(0, 0, W, H); }
   $('k3').style.opacity = smooth(seg(t, beat(19), beat(19) + .3)) * (1 - seg(t, beat(25), beat(25.5)));
   L3a.forEach((l, i) => rise(l, spring(t - beat(20) - i * BT / 4, 11, .82)));
   L3b.forEach((l, i) => rise(l, spring(t - (i < 3 ? beat(22) + i * BT / 8 : beat(23) + (i - 3) * BT / 8), 13, .75)));
@@ -640,9 +680,9 @@ function s3(t) {
 }
 
 // ---------- S4 + S5 classroom board
-const camS = kf([[S[3], 2.0], [beat(32), 1.6], [S[4], 1.0], [beat(37), 1.03], [S[5], 18, eInExpo]]);
+const camS = kf([[S[3], 1.45], [beat(32.5), 1.5], [S[4], 1.0], [beat(37), 1.03], [S[5], 18, eInExpo]]);
 function s45(t) {
-  const on = t >= S[3] && t < S[5]; show($('roomL'), on); if (!on || !LAY) return;
+  const on = t >= BOARD0 && t < S[5]; show($('roomL'), on); if (!on || !LAY) return;
   for (const it of LAY.items) {
     const p = seg(t, it.t0, it.t1);
     if (it.path) it.e.style.strokeDashoffset = (1 - p).toFixed(4);
@@ -653,10 +693,23 @@ function s45(t) {
   if (pen.on) { pe.style.left = (pen.x - SURF[0]) + 'px'; pe.style.top = (pen.y - SURF[1]) + 'px'; }
   const bd = $('bdot2'), dk = spring(t - beat(37), 18, .55), grow = 1 + 90 * eIn3(seg(t, beat(37.4), S[5]));
   bd.style.left = (LAY.bdot2[0] + SURF[0]) + 'px'; bd.style.top = (LAY.bdot2[1] + SURF[1]) + 'px'; bd.style.transform = `scale(${(dk * grow).toFixed(3)})`;
-  const s = camS(t), F = camAt(Math.min(t, beat(32))), C = [720, 540], D = [LAY.bdot2[0] + SURF[0], LAY.bdot2[1] + SURF[1]];
-  const pb = ease(seg(t, beat(32), S[4])), pd = eOut3(seg(t, beat(37) - .05, beat(37.7)));
+  const s = camS(t), F = camAt(Math.min(t, beat(32.5))), C = [720, 540], D = [LAY.bdot2[0] + SURF[0], LAY.bdot2[1] + SURF[1]];
+  const pb = ease(seg(t, beat(32.5), S[4])), whip = ease(seg(t, BOARD0, beat(30.5))), pd = eOut3(seg(t, beat(37) - .05, beat(37.7)));
   let px = lerp(F.x, C[0], pb), py = lerp(F.y, C[1], pb); px = lerp(px, D[0], pd); py = lerp(py, D[1], pd);
-  $('room').style.transform = `translate(${(720 - s * px).toFixed(2)}px,${(540 - s * py).toFixed(2)}px) scale(${s.toFixed(4)})`;
+  $('room').style.transform = `translate(${(720 - s * px).toFixed(2)}px,${(540 - s * py - (1 - whip) * 1080).toFixed(2)}px) scale(${s.toFixed(4)})`;
+}
+
+// ---------- S4a working out on paper, then a whip-pan up to the board
+function sP(t) {
+  const on = t >= S[3] && t < beat(30.5); show($('paperL'), on); if (!on || !LAY) return;
+  for (const it of LAY.pitems) { const p = seg(t, it.t0, it.t1); if (it.path) it.e.style.strokeDashoffset = (1 - p).toFixed(4); else it.e.style.clipPath = `inset(0 ${((1 - p) * 100).toFixed(2)}% 0 0)`; }
+  const pen = penOn(LAY.pitems, t), pp = $('pPen');
+  const lift = 1 - spring(t - S[3], 12, .8);
+  pp.style.left = (pen.x - 6 + lift * 260) + 'px'; pp.style.top = (pen.y - 294 + lift * 220 - (pen.on ? 0 : 10)) + 'px';
+  pp.style.transformOrigin = '6px 294px'; pp.style.transform = `rotate(${(pen.on ? 3 * Math.sin(t * 23) : 0).toFixed(2)}deg)`;
+  const s = lerp(1.42, 1.22, seg(t, S[3], beat(30))), py = kf([[S[3], 380], [beat(27.5), 470], [beat(29), 610], [beat(30), 650]])(t), px = 600 + 20 * Math.sin((t - S[3]) * .8);
+  const whip = ease(seg(t, BOARD0, beat(30.5)));
+  $('paper').style.transform = `translate(${(720 - s * px).toFixed(2)}px,${(540 - s * py + whip * 1080).toFixed(2)}px) scale(${s.toFixed(4)})`;
 }
 
 // ---------- S6 learn · practise (app) · evolve
@@ -688,15 +741,9 @@ function s6(t) {
     const f = ease(seg(t, tc + .05, beat(42))); $('aBarF').style.width = (546 * f).toFixed(1) + 'px'; $('aPct').textContent = Math.round(100 * f) + '%';
     $('tA').style.opacity = smooth(seg(u, .1, .3));
   } else {
-    const ck = spring(t - b2, 16, .7), ix = 200 + (1 - ck) * -110, iy = 150 + (1 - ck) * -110;
-    const q = [$('q1'), $('q2'), $('q3'), $('q4')];
-    q[0].style.left = ix + 'px'; q[0].style.top = iy + 'px'; q[1].style.right = ix + 'px'; q[1].style.top = iy + 'px';
-    q[2].style.left = ix + 'px'; q[2].style.bottom = iy + 'px'; q[3].style.right = ix + 'px'; q[3].style.bottom = iy + 'px';
-    const p = ease(seg(t, b2 + .03, b2 + .7));
-    $('wEi').style.clipPath = `inset(0 ${((1 - p) * 100).toFixed(2)}% 0 0)`;
-    $('wE').style.transform = `translateY(${((1 - spring(t - b2, 10, .8)) * 40).toFixed(1)}px) scale(${(1 + .06 * seg(t, b2, S[6])).toFixed(4)})`;
-    $('tE').style.opacity = smooth(seg(t, b2 + .08, b2 + .25));
-    $('eRec').style.opacity = Math.floor((t - b2) / BT) % 2 ? .35 : .85;
+    LeE.forEach((l, i) => rise(l, spring(t - b2 - i * BT / 8, 18, .68)));
+    $('wE').style.transform = `scale(${(1 + .05 * seg(t, b2, S[6])).toFixed(4)})`;
+    $('tE').style.opacity = smooth(seg(t, b2 + .06, b2 + .2));
   }
   $('bar').style.transform = `scaleY(${ease(seg(t, beat(44.5), S[6])).toFixed(4)})`;
 }
@@ -761,12 +808,7 @@ function s8(t) {
 
 // ---------- HUD, grain, vignette, global beat camera
 function hud(t) {
-  let si = 0; while (si < 7 && t >= S[si + 1]) si++;
-  $('hS').textContent = `Scene 0${si + 1} / 08`; $('hC').textContent = CAT[si];
-  const ss = Math.floor(t), ff = Math.floor((t - ss) * 30);
-  $('hT').lastChild.textContent = `00:${String(ss).padStart(2, '0')}.${String(ff).padStart(2, '0')}`;
   const cream = t >= S[5] && t < beat(39);
-  $('hud').style.color = cream ? '#0B1220' : '#ECEEF2';
   $('vig').style.opacity = cream ? .35 : (t >= S[6] && t < S[7] ? .6 : .95);
   const gi = Math.floor(t * 24) % 4; GRAIN.forEach((g, i) => g.style.display = i === gi ? 'block' : 'none');
   GRAIN[gi].style.backgroundPosition = `${(Math.floor(t * 24) * 37) % 256}px ${(Math.floor(t * 24) * 91) % 256}px`;
@@ -780,8 +822,8 @@ function seek(T) {
   bc.setTransform(1, 0, 0, 1, 0, 0); fc.setTransform(1, 0, 0, 1, 0, 0);
   bc.globalAlpha = fc.globalAlpha = 1; bc.globalCompositeOperation = fc.globalCompositeOperation = 'source-over';
   bc.clearRect(0, 0, W, H); fc.clearRect(0, 0, W, H);
-  stage.style.background = t >= S[6] && t < S[7] ? '#1D47D6' : '#07080B';
-  s1(t); s2(t); s3(t); s45(t); s6(t); s7(t); s8(t); hud(t);
+  stage.style.background = t >= S[6] && t < S[7] ? ROYAL : '#07080B';
+  s1(t); s2(t); s3(t); sP(t); s45(t); s6(t); s7(t); s8(t); hud(t);
 }
 window.seek = seek;
 
@@ -791,51 +833,9 @@ window.buildAudio = async function (ctx) {
   const sr = ctx.sampleRate, bin = atob(MP3), bytes = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
   const music = await ctx.decodeAudioData(bytes.buffer);
-  const master = ctx.createDynamicsCompressor(); master.threshold.value = -8; master.ratio.value = 3; master.attack.value = .005; master.release.value = .2; master.connect(ctx.destination);
   const mus = ctx.createBufferSource(); mus.buffer = music; const mg = ctx.createGain();
   mg.gain.setValueAtTime(1, 0); mg.gain.setValueAtTime(1, 27.35); mg.gain.linearRampToValueAtTime(0, DUR);
-  mus.connect(mg).connect(master); mus.start(0);
-  const fx = ctx.createGain(); fx.gain.value = .5; fx.connect(master);
-  const R = rng(99), nb = ctx.createBuffer(1, sr * 3, sr), nd = nb.getChannelData(0); for (let i = 0; i < nd.length; i++) nd[i] = R() * 2 - 1;
-  const noise = (t0, d) => { const s = ctx.createBufferSource(); s.buffer = nb; s.loop = true; s.start(t0, R() * 2); s.stop(t0 + d + .05); return s; };
-  const filt = (type, f, q = 1) => { const b = ctx.createBiquadFilter(); b.type = type; b.frequency.value = f; b.Q.value = q; return b; };
-  const gain = (t0, pts) => { const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, Math.max(0, t0)); for (const [tt, v] of pts) g.gain.exponentialRampToValueAtTime(Math.max(v, .0001), tt); return g; };
-  function whoosh(T, d = .6, g = .35, f0 = 250, f1 = 4500) { const t0 = Math.max(0, T - d * .7); const n = noise(t0, d); const bp = filt('bandpass', f0, 1.4); bp.frequency.setValueAtTime(f0, t0); bp.frequency.exponentialRampToValueAtTime(f1, T); bp.frequency.exponentialRampToValueAtTime(f0 * 1.5, t0 + d); n.connect(bp).connect(gain(t0, [[T, g], [t0 + d, .0001]])).connect(fx); }
-  function boom(T, g = .9, len = 1.6, f0 = 80, f1 = 30) { const o = ctx.createOscillator(); o.frequency.setValueAtTime(f0, T); o.frequency.exponentialRampToValueAtTime(f1, T + len); o.connect(gain(T, [[T + .01, g], [T + len, .0001]])).connect(fx); o.start(T); o.stop(T + len + .05); const n = noise(T, .5); const lp = filt('lowpass', 900); lp.frequency.setValueAtTime(900, T); lp.frequency.exponentialRampToValueAtTime(120, T + .45); n.connect(lp).connect(gain(T, [[T + .005, g * .7], [T + .5, .0001]])).connect(fx); }
-  function rumble(T, len, g) { const n = noise(T, len); const lp = filt('lowpass', 110, .7); n.connect(lp).connect(gain(T, [[T + .25, g], [T + len * .5, g * .6], [T + len, .0001]])).connect(fx); }
-  function riser(t0, t1, g = .25) { const n = noise(t0, t1 - t0); const bp = filt('bandpass', 300, 2); bp.frequency.setValueAtTime(300, t0); bp.frequency.exponentialRampToValueAtTime(7000, t1); n.connect(bp).connect(gain(t0, [[t1 - .02, g], [t1 + .04, .0001]])).connect(fx); }
-  function pluck(T, f, g = .18, d = .8) { const o = ctx.createOscillator(); o.type = 'triangle'; o.frequency.value = f; const lp = filt('lowpass', f * 4); o.connect(lp).connect(gain(T, [[T + .006, g], [T + d, .0001]])).connect(fx); o.start(T); o.stop(T + d + .05); }
-  function blip(T, f = 1600, g = .08, d = .06) { const o = ctx.createOscillator(); o.frequency.value = f; o.connect(gain(T, [[T + .003, g], [T + d, .0001]])).connect(fx); o.start(T); o.stop(T + d + .02); }
-  function thump(T, g = .6) { const o = ctx.createOscillator(); o.frequency.setValueAtTime(160, T); o.frequency.exponentialRampToValueAtTime(45, T + .2); o.connect(gain(T, [[T + .004, g], [T + .3, .0001]])).connect(fx); o.start(T); o.stop(T + .35); }
-  function tick(T, g = .07) { const n = noise(T, .02); n.connect(filt('highpass', 3500)).connect(gain(T, [[T + .002, g], [T + .02, .0001]])).connect(fx); }
-  function chalk(t0, t1, g = .1) { const n = noise(t0, t1 - t0); const gg = ctx.createGain(); gg.gain.setValueAtTime(0, t0); for (let tt = t0; tt < t1; tt += .028) gg.gain.setTargetAtTime(R() < .14 ? 0 : g * (.35 + .65 * R()), tt, .006); gg.gain.setTargetAtTime(0, t1, .01); n.connect(filt('bandpass', 2900, 1.3)).connect(filt('highpass', 900)).connect(gg).connect(fx); }
-  function bell(T, g = .09) { [[466.16, 3.2], [554.37, 2.6], [698.46, 2.2], [932.33, 1.6], [1396.9, 1.0]].forEach(([f, d], i) => { const o = ctx.createOscillator(); o.frequency.value = f; o.connect(gain(T + i * .012, [[T + i * .012 + .01, g * (1 - i * .12)], [T + d, .0001]])).connect(fx); o.start(T); o.stop(T + d + .05); }); }
-  function puffs(T, g = .1) { const n = noise(T, .3); n.connect(filt('lowpass', 500)).connect(gain(T, [[T + .08, g], [T + .3, .0001]])).connect(fx); }
-
-  blip(beat(1), 2093, .1, .25); whoosh(beat(1) + .42, .5, .2, 600, 6000); whoosh(beat(2) + .3, .7, .3, 200, 3000);
-  [233.08, 277.18, 311.13, 349.23, 415.30].forEach((f, i) => { pluck(beat(3 + i), f, .16); tick(beat(3 + i), .04); });
-  riser(beat(8) - .25, S[1], .22);
-  boom(S[1], 1.0, 2.2, 70, 26); rumble(S[1], 4.3, .55);
-  for (let i = 0; i < 40; i++) tick(S[1] + .2 + R() * 3.2, .03 + R() * .04);
-  thump(beat(13), .45); thump(beat(14), .45); riser(beat(16), S[2], .3);
-  boom(S[2], .8, 1.2, 90, 35); whoosh(S[2] + .05, .6, .3, 4000, 400);
-  for (let k = 19; k < 26; k++) puffs(beat(k) + .02, .09);
-  blip(beat(20), 1864.7, .06, .12); blip(beat(22), 2093, .07, .12);
-  whoosh(S[3], 1.0, .55, 150, 5000);
-  for (const [, a, b] of WR) chalk(a, b, .09);
-  whoosh(S[4] - .1, 1.0, .18, 120, 1200); tick(beat(37), .1); whoosh(S[5], .6, .35, 300, 6000); thump(S[5], .6);
-  thump(beat(39), .5); whoosh(beat(39) + .1, .5, .3, 300, 3000);
-  { const T = beat(41); tick(T, .14); blip(T, 2489, .08, .05); for (let i = 0; i < 6; i++) blip(T + .08 + i * .065, 932.33 * Math.pow(2, i / 12 * 2), .035, .04); }
-  chalk(beat(43) + .03, beat(43) + .7, .07); thump(beat(43), .5);
-  whoosh(S[6], .5, .4, 250, 5000);
-  boom(S[6], .6, .9, 90, 40);
-  for (let i = 0; i < 12; i++) tick(i < 5 ? beat(45) + i * BT / 8 : beat(45.5) + (i - 5) * BT / 8, .06);
-  pluck(beat(46.5), 698.46, .12, .6); pluck(beat(47), 466.16, .1, .8);
-  whoosh(beat(50.6), .7, .3, 300, 4000); riser(beat(50), S[7], .25); whoosh(beat(51.8), .6, .25, 120, 1500);
-  bell(S[7]); boom(S[7], .5, 1.0, 110, 50);
-  { const o = ctx.createOscillator(); o.frequency.setValueAtTime(260, S[7]); o.frequency.exponentialRampToValueAtTime(900, S[7] + .18); o.connect(gain(S[7], [[S[7] + .01, .12], [S[7] + .25, .0001]])).connect(fx); o.start(S[7]); o.stop(S[7] + .3); }
-  for (let i = 0; i < ROUTE.length; i++) blip(beat(52.5 + i * .5), [932.33, 1046.5, 1108.7, 1244.5, 1396.9][i], .035, .08);
-  const line = 'Learn · Practise · Papers — out today'; for (let i = 0; i < line.length; i++) if (line[i] !== ' ') blip(beat(55.5) + (i + 1) / line.length * (beat(57.2) - beat(55.5)), 1800, .03, .03);
+  mus.connect(mg).connect(ctx.destination); mus.start(0);
 };
 
 const RENDER = location.search.includes('render');
