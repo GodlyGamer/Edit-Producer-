@@ -7,7 +7,7 @@ const here = path.dirname(new URL(import.meta.url).pathname);
 const b64 = f => readFileSync(path.join(here, f)).toString('base64');
 let html = readFileSync(tpl, 'utf8');
 const map = {
-  __F_INTER__: 'fonts/interTight.woff2', __F_ONEST__: 'fonts/Onest.woff2',  __F_GEIST__: "fonts/Geist.woff2", __F_SERIF__: 'fonts/instrItalic.woff2', __F_MARTIAN__: 'fonts/MartianMono.woff2',
+  __F_INTER__: 'fonts/interTight.woff2', __F_ONEST__: 'fonts/Onest.woff2',  __F_GEIST__: 'fonts/Geist.woff2', __F_GEISTX__: 'fonts/GeistMath.woff2', __F_SERIF__: 'fonts/instrItalic.woff2', __F_MARTIAN__: 'fonts/MartianMono.woff2',
   __F_MONO__: 'fonts/jbmono.woff2', __F_CAVEAT__: 'fonts/caveat.woff2', __F_KALAM__: 'fonts/kalam700.woff2', __F_KALAMX__: 'fonts/kalam700-math.woff2',
   __IMG_ORB__: 'orb.png', __IMG_APP__: 'app-crop.jpg', __IMG_ROW__: 'app-row.png', __MP3__: 'music.mp3'
 };

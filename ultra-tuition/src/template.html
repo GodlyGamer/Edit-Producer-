@@ -6,24 +6,18 @@
 <title>Ultra Tuition Launch</title>
 <style>
 @font-face{font-family:'Geist';src:url(data:font/woff2;base64,__F_GEIST__) format('woff2');font-weight:100 900;font-display:block}
-@font-face{font-family:'Onest';src:url(data:font/woff2;base64,__F_ONEST__) format('woff2');font-weight:100 900;font-display:block}
-@font-face{font-family:'Instrument Serif';font-style:italic;font-weight:400;src:url(data:font/woff2;base64,__F_SERIF__) format('woff2');font-display:block}
-@font-face{font-family:'Martian Mono';font-weight:400;src:url(data:font/woff2;base64,__F_MARTIAN__) format('woff2');font-display:block}
-@font-face{font-family:'JB Mono';font-weight:400;src:url(data:font/woff2;base64,__F_MONO__) format('woff2');font-display:block}
-@font-face{font-family:'Caveat';font-weight:400 700;src:url(data:font/woff2;base64,__F_CAVEAT__) format('woff2');font-display:block}
-@font-face{font-family:'Kalam';font-weight:700;src:url(data:font/woff2;base64,__F_KALAM__) format('woff2');font-display:block}
-@font-face{font-family:'Kalam';font-weight:700;src:url(data:font/woff2;base64,__F_KALAMX__) format('woff2');unicode-range:U+03C0,U+221A,U+221E,U+222B;font-display:block}
+@font-face{font-family:'Geist';src:url(data:font/woff2;base64,__F_GEISTX__) format('woff2');font-weight:100 900;unicode-range:U+03C0,U+2212,U+221A,U+221E,U+222B;font-display:block}
 
 html,body{margin:0;background:#050608;overflow:hidden;height:100%}
-body{font-family:'Onest',sans-serif;color:#fff}
+body{font-family:'Geist',sans-serif;color:#fff}
 #stage{position:absolute;left:0;top:0;width:1440px;height:1080px;overflow:hidden;background:#07080B;transform-origin:0 0}
 #cam{position:absolute;left:0;top:0;width:1440px;height:1080px;transform-origin:50% 50%}
 .layer{position:absolute;left:0;top:0;width:1440px;height:1080px;pointer-events:none}
 canvas.full{position:absolute;left:0;top:0;width:1440px;height:1080px}
 .abs{position:absolute;white-space:nowrap}
 .ctr{left:0;right:0;text-align:center}
-.mono{font-family:'Martian Mono',monospace;font-weight:400;letter-spacing:.22em;text-transform:uppercase}
-.serif{font-family:'Instrument Serif',serif;font-style:italic;font-weight:400}
+.mono{font-family:'Geist',sans-serif;font-weight:500;letter-spacing:.28em;text-transform:uppercase}
+.serif{font-family:'Geist',sans-serif;font-weight:600;letter-spacing:-.035em}
 .heavy{font-family:'Geist',sans-serif;font-weight:800;letter-spacing:-.045em;text-transform:uppercase}
 .gl{font-family:'Geist',sans-serif;font-weight:500;letter-spacing:.3em;text-transform:uppercase}
 .m{display:inline-block;overflow:hidden;vertical-align:top;padding:.04em .14em .14em;margin:0 -.14em}
@@ -37,7 +31,7 @@ canvas.full{position:absolute;left:0;top:0;width:1440px;height:1080px}
   background:linear-gradient(160deg,#b9bcc6 0%,#6b6f7c 35%,#a6aab6 60%,#4a4e5a 100%);box-shadow:0 30px 60px rgba(0,0,0,.6)}
 #surf{position:absolute;left:24px;top:24px;width:1192px;height:732px;overflow:hidden;background-color:#17211C;background-size:100% 100%;border-radius:3px}
 #chalk{position:absolute;left:0;top:0;width:1192px;height:732px;-webkit-mask-size:256px 256px;mask-size:256px 256px}
-.eq{position:absolute;font-family:'Kalam',cursive;font-weight:700;font-size:96px;line-height:1.1;color:#EEEAE0;padding:24px 20px;white-space:nowrap;text-shadow:0 0 3px rgba(255,255,255,.25)}
+.eq{position:absolute;font-family:'Geist',sans-serif;font-weight:600;letter-spacing:-.02em;font-size:96px;line-height:1.1;color:#EEEAE0;padding:24px 20px;white-space:nowrap;text-shadow:0 0 3px rgba(255,255,255,.25)}
 .eq sup{font-size:.55em;position:relative;top:-.9em;vertical-align:baseline;line-height:0}
 .lim{position:relative;display:inline-block;width:.42em;height:.1em;vertical-align:baseline}
 .lim i{position:absolute;font-style:normal;font-size:.36em;line-height:1}
@@ -67,7 +61,7 @@ canvas.full{position:absolute;left:0;top:0;width:1440px;height:1080px}
 #aBarC{position:absolute;left:184px;top:884px;width:556px;height:8px;background:#101216}
 #aBarT{position:absolute;left:2px;top:1px;width:550px;height:6px;background:#171819}
 #aBarF{position:absolute;left:2px;top:2px;height:4px;background:#10B981;width:0}
-#aPct{position:absolute;left:742px;top:878px;width:54px;height:20px;background:#101216;font:12.5px 'JB Mono',monospace;color:#a3a8b3;text-align:right;line-height:20px}
+#aPct{position:absolute;left:742px;top:878px;width:54px;height:20px;background:#101216;font:12.5px 'Geist',sans-serif;color:#a3a8b3;text-align:right;line-height:20px}
 #aRing{position:absolute;left:214px;top:714px;width:60px;height:60px;margin:-30px 0 0 -30px;border-radius:50%;border:2px solid #4D8DFF}
 #cursor{position:absolute;left:0;top:0;width:34px;height:34px}
 
@@ -75,7 +69,7 @@ canvas.full{position:absolute;left:0;top:0;width:1440px;height:1080px}
 #paper{position:absolute;left:0;top:0;width:1440px;height:1400px;transform-origin:0 0;background-color:#F4F1E9;
   background-image:linear-gradient(90deg,transparent 229px,rgba(214,86,86,.55) 229px,rgba(214,86,86,.55) 232px,transparent 232px),repeating-linear-gradient(180deg,transparent 0 118px,rgba(110,150,210,.42) 118px 120px)}
 #paperTex{position:absolute;inset:0;background-size:512px 512px;mix-blend-mode:multiply;opacity:.55}
-.pl{position:absolute;left:262px;font-family:'Caveat','Kalam',cursive;font-weight:700;font-size:100px;line-height:1;color:#1E2F8C;padding:10px 18px;white-space:nowrap}
+.pl{position:absolute;left:262px;font-family:'Geist',sans-serif;font-weight:500;letter-spacing:-.02em;font-size:84px;line-height:1;color:#1E2F8C;padding:10px 18px;white-space:nowrap}
 #pDood{position:absolute;left:0;top:0;overflow:visible}
 #pDood path{fill:none;stroke:#1E2F8C;stroke-width:5;stroke-linecap:round;stroke-dasharray:1 1}
 #pPen{position:absolute;width:300px;height:300px}
@@ -85,7 +79,7 @@ canvas.full{position:absolute;left:0;top:0;width:1440px;height:1080px}
 .gr{position:absolute;inset:0;background-size:256px 256px;opacity:.9}
 
 /* hud */
-#hud{color:#ECEEF2;opacity:.55;font-family:'Martian Mono',monospace;font-size:13px;letter-spacing:.14em;text-transform:uppercase}
+#hud{color:#ECEEF2;opacity:.55;font-family:'Geist',sans-serif;font-size:13px;letter-spacing:.14em;text-transform:uppercase}
 .cb{position:absolute;width:44px;height:44px;border:0 solid currentColor}
 .cb.tl{left:30px;top:30px;border-left-width:2px;border-top-width:2px}
 .cb.tr{right:30px;top:30px;border-right-width:2px;border-top-width:2px}
@@ -93,8 +87,8 @@ canvas.full{position:absolute;left:0;top:0;width:1440px;height:1080px}
 .cb.br{right:30px;bottom:30px;border-right-width:2px;border-bottom-width:2px}
 #hT b{display:inline-block;width:10px;height:10px;border-radius:50%;background:#FF2D2D;margin-right:10px;vertical-align:0}
 
-#ui{position:fixed;left:0;right:0;bottom:0;height:56px;display:flex;align-items:center;gap:14px;padding:0 18px;background:#0d0f14;color:#ddd;font:13px 'JB Mono',monospace;box-sizing:border-box}
-#ui button{background:#1D47D6;color:#fff;border:0;border-radius:6px;padding:8px 16px;font:600 13px 'JB Mono',monospace;cursor:pointer}
+#ui{position:fixed;left:0;right:0;bottom:0;height:56px;display:flex;align-items:center;gap:14px;padding:0 18px;background:#0d0f14;color:#ddd;font:13px 'Geist',sans-serif;box-sizing:border-box}
+#ui button{background:#1D47D6;color:#fff;border:0;border-radius:6px;padding:8px 16px;font:600 13px 'Geist',sans-serif;cursor:pointer}
 #ui input{flex:1;accent-color:#4D8DFF}
 </style>
 </head>
@@ -105,9 +99,9 @@ canvas.full{position:absolute;left:0;top:0;width:1440px;height:1080px}
 
   <div id="c1" class="layer">
     <div id="lab0" class="abs gl ctr" style="top:714px;font-size:16px;color:#FFB27A">Ultra Tuition / launch — 2026</div>
-    <div id="k1" class="abs mono ctr" style="top:96px;font-size:15px;color:#FFC79E">Chapter 01 — Evolution</div>
-    <div id="h1" class="abs serif ctr" data-dot="#FF5A1F" style="top:124px;font-size:112px;line-height:1;color:#F6EDE2">We were built to learn.</div>
-    <div id="figlabs"></div>
+    <div id="k1" class="abs mono ctr" style="top:96px;font-size:15px;color:#FFC79E">Chapter 01 — Growth</div>
+    <div id="h1" class="abs serif ctr" data-dot="#FF5A1F" style="top:126px;font-size:84px;line-height:1;color:#F6EDE2">We were built to learn.</div>
+    <div id="treelabs"></div>
   </div>
   <div id="c2" class="layer">
     <div id="k2" class="abs mono ctr" style="top:806px;font-size:15px;color:#FFB27A">Chapter 02 — Energy</div>
@@ -115,7 +109,7 @@ canvas.full{position:absolute;left:0;top:0;width:1440px;height:1080px}
   </div>
   <div id="c3" class="layer">
     <div id="k3" class="abs mono ctr" style="top:80px;font-size:15px;color:#A9DCFF">Chapter 03 — The butterfly effect</div>
-    <div id="h3a" class="abs serif ctr" style="top:104px;font-size:108px;line-height:1;color:#EEF3FF">Small changes</div>
+    <div id="h3a" class="abs serif ctr" style="top:108px;font-size:84px;line-height:1;color:#EEF3FF">Small changes</div>
     <div id="h3b" class="abs heavy ctr" data-dot="#4D8DFF" style="top:870px;font-size:100px;line-height:1;color:#FFFFFF">Big effects.</div>
   </div>
 
@@ -195,7 +189,7 @@ canvas.full{position:absolute;left:0;top:0;width:1440px;height:1080px}
       <div id="bw1" class="heavy" style="display:table;margin:0 auto;font-size:210px;line-height:.92;color:#fff">Ultra</div>
       <div id="bw2" class="heavy" style="display:table;margin:0 auto;font-size:210px;line-height:.92;color:#fff"><span id="bw2t">Tuition</span><span class="m" style="margin:0;padding:.04em 0 .14em"><span class="l" id="bdotw"><span id="bdot"></span></span></span></div>
     </div>
-    <div id="bs" class="abs serif ctr" style="top:690px;font-size:80px;line-height:1;color:#DCE8FF">one step at a time, until it sticks.</div>
+    <div id="bs" class="abs serif ctr" style="top:694px;font-size:56px;line-height:1;color:#DCE8FF">one step at a time, until it sticks.</div>
   </div>
 
   <canvas id="front" class="full" width="1440" height="1080"></canvas>
@@ -416,13 +410,54 @@ const L1 = split($('h1')), L2 = split($('h2'), 'c'), L3a = split($('h3a')), L3b 
 const LeE = split($('wE'), 'c'), Lb1 = split($('bw1'), 'c'), Lb2 = split($('bw2t'), 'c'), LeQ = split($('eQ'));
 const rise = (l, k, d = 115) => { l.style.transform = `translateY(${((1 - k) * d).toFixed(2)}%)`; };
 
-const FIG = [{ p: 0, sc: .76, cx: 250, n: 'Australopithecus' }, { p: .3, sc: .8, cx: 485, n: 'Homo habilis' }, { p: .56, sc: .84, cx: 720, n: 'Homo erectus' }, { p: .84, sc: .88, cx: 955, n: 'Homo sapiens' }, { p: 1, sc: .9, cx: 1190, n: 'You' }];
-const FLAB = FIG.map((f, i) => { const d = document.createElement('div'); d.className = 'abs mono'; d.style.cssText = `top:${G + 30}px;left:${f.cx}px;font-size:12px;letter-spacing:.14em;text-align:center;line-height:1.7;color:${i === 4 ? '#FF8A4A' : 'rgba(246,237,226,.62)'}`; d.innerHTML = `0${i + 1}<br>${f.n}`; $('figlabs').appendChild(d); return d; });
+// oak: a seeded branching structure; growth g (0..1) unfolds it depth by depth
+const TREE = []; (() => { const Rt = rng(31); const add = (parent, ang, len, d) => { const i = TREE.length; TREE.push({ parent, ang, len, d, lf: Rt() }); if (d >= 6) return; const n = d === 0 ? 3 : (Rt() < .55 ? 3 : 2); for (let k = 0; k < n; k++) { const spread = n === 2 ? (k ? 1 : -1) * (.4 + Rt() * .25) : (k - 1) * (.55 + Rt() * .18); add(i, spread + (Rt() - .5) * .18, len * (d === 0 ? .78 : .74 + Rt() * .1), d + 1); } }; add(-1, 0, 120, 0); })();
+const ROOTS = (() => { const Rr = rng(77); return Array.from({ length: 9 }, (_, i) => ({ f: .2 + Rr() * .75, side: i % 2 ? 1 : -1, ang: .7 + Rr() * .6, len: 50 + Rr() * 130, b: .22 + i * .08 })); })();
+const STAGES = [['01 — Seed', 'Semen', -1, 845], ['02 — Germination', 'Radicula', 1, 930], ['03 — Seedling', 'Cotyledones', -1, 686], ['04 — Sapling', 'Quercus robur, juv.', 1, 686], ['05 — Mature tree', 'Quercus robur L.', 1, 286]];
+const TLAB = STAGES.map(([a, b, side, y]) => { const d = document.createElement('div'); d.className = 'abs'; d.style.cssText = `top:${y}px;${side < 0 ? 'right:' + (W - 470) : 'left:' + 1066}px;text-align:${side < 0 ? 'right' : 'left'};line-height:1.25`; d.innerHTML = `<div class="mono" style="font-size:14px;color:#FFB27A">${a}</div><div style="font-family:Geist;font-weight:600;font-size:27px;letter-spacing:-.01em;color:#F6EDE2">${b}</div>`; $('treelabs').appendChild(d); return d; });
+const growth = track(0, [[beat(3), .045, 7, .9], [beat(4), .16, 7, .9], [beat(5), .32, 7, .9], [beat(6), .58, 7, .9], [beat(7), 1, 7, .95]]);
+const SEED = [CX, G + 58];
+function drawTree(c, t, g) {
+  const ink = '#050407';
+  // underground: seed and glowing roots
+  c.save(); c.globalCompositeOperation = 'lighter';
+  const rl = 150 * smooth(seg(g, .08, .45)), rtip = [SEED[0] + 10 * Math.sin(rl / 60), SEED[1] + rl];
+  c.strokeStyle = 'rgba(255,150,80,.75)'; c.lineWidth = 2.4; c.lineCap = 'round';
+  if (rl > 1) { c.beginPath(); c.moveTo(SEED[0], SEED[1]); c.quadraticCurveTo(SEED[0] - 6, SEED[1] + rl * .5, rtip[0], rtip[1]); c.stroke(); }
+  c.lineWidth = 1.5; c.strokeStyle = 'rgba(255,150,80,.5)';
+  for (const r of ROOTS) { const k = smooth(seg(g, r.b, r.b + .25)); if (k <= 0) continue; const y0 = SEED[1] + rl * r.f, x0 = SEED[0] + 6 * Math.sin(y0 / 40); c.beginPath(); c.moveTo(x0, y0); c.quadraticCurveTo(x0 + r.side * r.len * .5 * k, y0 + 8, x0 + r.side * Math.sin(r.ang) * r.len * k, y0 + Math.cos(r.ang) * r.len * k * .8); c.stroke(); }
+  const sa = smooth(seg(t, beat(2.4), beat(2.7)));
+  if (sa > 0) { sprite(c, GL.ember, SEED[0], SEED[1], 90, 70, .55 * sa); }
+  c.restore();
+  if (sa > 0) { c.save(); c.globalAlpha = sa; c.fillStyle = '#2a140b'; c.strokeStyle = '#FFB27A'; c.lineWidth = 2; const crack = smooth(seg(g, .1, .2));
+    c.beginPath(); c.ellipse(SEED[0], SEED[1], 15, 10, -.3, 0, 7); c.fill(); c.stroke();
+    if (crack > 0) { c.beginPath(); c.moveTo(SEED[0] - 8, SEED[1] - 5); c.lineTo(SEED[0] - 8 + 16 * crack, SEED[1] + 5 * crack); c.stroke(); } c.restore(); }
+  // shoot from seed to surface
+  const sh = smooth(seg(g, .1, .2));
+  if (sh > 0) { c.strokeStyle = ink; c.lineWidth = 4; c.lineCap = 'round'; c.beginPath(); c.moveTo(SEED[0], SEED[1] - 8); c.lineTo(SEED[0], lerp(SEED[1] - 8, G + 2, sh)); c.stroke(); }
+  // above ground: the oak silhouette
+  const P = []; const thick = .15 + .85 * smooth(seg(g, .3, 1));
+  c.strokeStyle = c.fillStyle = ink; c.lineCap = 'round';
+  for (let i = 0; i < TREE.length; i++) {
+    const b = TREE[i]; const st = b.d === 0 ? .12 : .3 + b.d * .07, f = b.d === 0 ? smooth(seg(g, st, .72)) : smooth(seg(g, st, st + .22));
+    const pa = b.parent < 0 ? { x: CX, y: G, a: -Math.PI / 2, f: 1 } : P[b.parent];
+    if (!pa || pa.f < .6 || f <= 0) { P.push(null); continue; }
+    const a = pa.a + b.ang + .015 * b.d * Math.sin(t * 1.4 + i), L = b.len * f;
+    const x = pa.x + Math.cos(a) * L, y = pa.y + Math.sin(a) * L;
+    c.lineWidth = Math.max(1.4, 34 * Math.pow(.6, b.d) * thick); c.beginPath(); c.moveTo(pa.x, pa.y); c.lineTo(x, y); c.stroke();
+    P.push({ x, y, a, f });
+    if (b.d >= 4) { const lk = smooth(seg(g, .58 + b.d * .02, .95)) * (b.d === 6 ? 1 : b.d === 5 ? .8 : .6); if (lk > 0) { const r = (13 + 11 * b.lf) * lk; c.beginPath(); c.arc(x, y, r, 0, 7); c.arc(x + r * .7, y + r * .3, r * .75, 0, 7); c.arc(x - r * .6, y + r * .4, r * .7, 0, 7); c.fill(); } }
+  }
+  // cotyledons on the seedling
+  const top = P[0] || { x: CX, y: G }, ck = smooth(seg(g, .14, .24)) * (1 - smooth(seg(g, .5, .64)));
+  if (ck > 0) for (const sd of [-1, 1]) { c.beginPath(); c.ellipse(top.x + sd * 13 * ck, top.y - 4, 15 * ck, 7 * ck, sd * -.5, 0, 7); c.fill(); }
+  return { seed: SEED, rtip, cot: [top.x + 16 * ck, top.y - 4], trunk: [CX + 6, G - 60 * smooth(seg(g, .3, .7))], crown: [CX + 150, G - 300] };
+}
 const PAT = Array.from({ length: 7 }, (_, i) => { const d = document.createElement('div'); d.className = 'rowp'; d.style.top = (i * 172 - 60) + 'px'; d.textContent = 'PRACTISE PRACTISE PRACTISE'; $('pat').appendChild(d); return d; });
 
 // ---------- layout measured once fonts are ready
 let LAY = null;
-const FONTS = ['800 100px Geist', '800 100px Onest', 'italic 100px "Instrument Serif"', '100px "Martian Mono"', '100px "JB Mono"', '700 100px Caveat', '700 100px Kalam'];
+const FONTS = ['800 100px Geist', '500 100px Geist', '600 100px Geist'];
 FONTS.forEach(f => document.fonts.load(f).catch(() => {}));
 const BB = k => beat(k);
 // chalk schedule on the beat grid (whole and half beats)
@@ -529,7 +564,7 @@ function s1(t) {
   c.fillStyle = '#07080B'; c.fillRect(0, 0, W, H);
   grid(c, .07 * (1 - smooth(seg(t, 1.0, 1.6))));
   // camera pans to follow the sprinter once he's away (softplus = no jolt when it starts)
-  const rt4 = Math.max(0, t - beat(6)), pan = 520 * rt4 * rt4 + 330 * smooth(seg(t, beat(6), beat(7.4)));
+  const pan = 0;
   const open = eOutExpo(seg(t, beat(2), beat(2) + .7)), kb = eIn3(seg(t, beat(8) - .25, S[1]));
   if (open > 0) { const top = G * (1 - open); c.save(); c.beginPath(); c.rect(0, top, W, G - top); c.clip(); sunset(c, t, kb, pan);
     c.fillStyle = '#050407'; for (const b of SCRUB) { const x = b.x - pan; if (x < -60 || x > W + 60) continue; if (b.t) { c.beginPath(); for (let j = -3; j <= 3; j++) { c.moveTo(x + j * 3 - 2, G + 1); c.lineTo(x + j * 6 + j * j * .6, G - b.h * (2.4 - Math.abs(j) * .45)); c.lineTo(x + j * 3 + 2, G + 1); } c.fill(); } else { c.beginPath(); c.ellipse(x, G + 2, b.w, b.h, 0, Math.PI, 2 * Math.PI); c.fill(); } }
@@ -542,18 +577,23 @@ function s1(t) {
     for (let x = CX - half; x <= CX + half + .1; x += 8) { const y = G + wob * Math.sin((x - CX + half) / (2 * half + 1) * Math.PI); x === CX - half ? c.moveTo(x, y) : c.lineTo(x, y); }
     c.stroke(); sprite(c, GL.ember, CX, G, 2000 * ll, 60, .55); c.restore();
   }
-  const pk = pulse(t, beat(1), .12), fade = 1 - seg(t, .9, 1.2), sp = t < beat(1) ? smooth(seg(t, .05, beat(1))) * .5 : 1;
-  if (fade > 0) { c.save(); c.globalCompositeOperation = 'lighter'; sprite(c, GL.ember, CX, G, (70 + 300 * pk) * sp * fade, null, .9); c.fillStyle = '#FFE8D2'; c.beginPath(); c.arc(CX, G, (4 + 5 * pk) * sp * fade, 0, 7); c.fill(); c.restore(); }
-  const drift = 18 * Math.max(0, t - 1.4);
-  for (let i = 0; i < 5; i++) {
-    const f = FIG[i], k = spring(t - beat(2.5 + i * .5), 12, .78); const a = clamp(k * 1.5);
-    // the modern human breaks into a sprint on beat 6 and leaves frame before the flash
-    const run = i === 4 ? smooth(seg(t, beat(6), beat(6.6))) : 0, rt = i === 4 ? Math.max(0, t - beat(6)) : 0, dx = 520 * rt * rt;
-    FLAB[i].style.opacity = a * (i === 4 ? 1 - seg(t, beat(6), beat(6.4)) : 1); FLAB[i].style.transform = `translateX(calc(-50% + ${(drift - 40 * (1 - k) - pan).toFixed(1)}px))`;
-    if (a <= .001) continue;
-    const ph = (t - beat(0)) / (4 * BT) * Math.PI * 2 + i * Math.PI / 2 + 2 * Math.PI * 1.6 * rt * rt;
-    c.globalAlpha = a; drawFigure(c, f.cx - lerp(52, 9, f.p) + drift - 40 * (1 - k) + dx - pan, f.p, ph, f.sc, i === 4, run); c.globalAlpha = 1;
-  }
+  // the spark drops into the soil and becomes the seed
+  const pk = pulse(t, beat(1), .12), fade = 1 - seg(t, beat(2.5), beat(2.75)), sp = t < beat(1) ? smooth(seg(t, .05, beat(1))) * .5 : 1, sy = lerp(G, SEED[1], eIn3(seg(t, beat(2), beat(2.5))));
+  if (fade > 0) { c.save(); c.globalCompositeOperation = 'lighter'; sprite(c, GL.ember, CX, sy, (70 + 300 * pk) * sp * fade, null, .9); c.fillStyle = '#FFE8D2'; c.beginPath(); c.arc(CX, sy, (4 + 5 * pk) * sp * fade, 0, 7); c.fill(); c.restore(); }
+  const g = growth(t), T = drawTree(c, t, g);
+  // callouts: one stage per beat, a pointer line from the label to the part it names
+  const tg = [T.seed, T.rtip, T.cot, T.trunk, T.crown], lout = 1 - seg(t, beat(8) - .05, beat(8) + .2);
+  c.save(); c.lineWidth = 1.5;
+  STAGES.forEach(([, , side, y], i) => {
+    const tb = beat(3 + i), k = spring(t - tb - .04, 14, .8), lp = ease(seg(t, tb, tb + .32)), el = TLAB[i];
+    el.style.opacity = clamp(k) * lout; el.style.transform = `translateY(${((1 - k) * 14).toFixed(1)}px)`;
+    if (lp <= 0 || lout <= 0) return;
+    const ax = side < 0 ? 484 : 1052, ay = y + 22, [tx, ty] = tg[i], ex = lerp(ax, tx, lp), ey = lerp(ay, ty, lp);
+    c.globalAlpha = .85 * lout; c.strokeStyle = 'rgba(246,237,226,.85)'; c.beginPath(); c.moveTo(ax, ay); c.lineTo(ex, ey); c.stroke();
+    c.fillStyle = '#F6EDE2'; c.beginPath(); c.arc(ax, ay, 2.5, 0, 7); c.fill();
+    if (lp > .98) { const pr = 4 + 3 * pulse(t, tb + .32, .2); c.beginPath(); c.arc(tx, ty, pr, 0, 7); c.fill(); c.strokeStyle = 'rgba(246,237,226,.5)'; c.beginPath(); c.arc(tx, ty, pr + 6, 0, 7); c.stroke(); }
+  });
+  c.restore(); c.globalAlpha = 1;
   if (kb > 0) { c.fillStyle = `rgba(255,248,236,${kb * kb})`; c.fillRect(0, 0, W, H); }
   const lab = $('lab0'), n = Math.round(29 * seg(t, beat(1) + .06, beat(2) - .06));
   lab.textContent = 'ultra tuition / launch — 2026'.slice(0, n) + (t < beat(2) && Math.floor(t * 8) % 2 ? '▍' : '');
@@ -609,7 +649,7 @@ function s2(t) {
     else { const d = (1 - Math.exp(-age * .9)) / .9; x = ox + Math.cos(q.ang) * q.sp * d; y = oy + Math.sin(q.ang) * q.sp * d; sc = .5 + .5 * smooth(age / .5) + .12 * age; a = smooth(age / .15) * (1 - smooth((age - 1.9) / 1.2)); }
     a *= capOut; if (a <= .003) continue;
     c.globalAlpha = a; c.save(); c.translate(x, y); c.rotate(q.hero ? 0 : q.rot + q.vr * age); c.scale(sc, sc);
-    c.font = `700 ${q.hero ? 64 : q.s.toFixed(1)}px Kalam`; c.fillText('E = mc²', 0, 0); c.restore();
+    c.font = `600 ${q.hero ? 60 : (q.s * .9).toFixed(1)}px Geist`; c.fillText('E = mc²', 0, 0); c.restore();
   }
   c.restore(); c.globalAlpha = 1;
   const fl = Math.exp(-tau * 4.5); if (fl > .002) { c.fillStyle = `rgba(255,248,236,${fl})`; c.fillRect(0, 0, W, H); }
@@ -682,7 +722,7 @@ function s3(t) {
     const a = smooth(age / .12) * (1 - smooth((age - 1.6) / 1.0)) * (1 - seg(t, beat(25.8), S[3]));
     if (a <= .003) continue;
     c.globalAlpha = a; c.save(); c.translate(x, y); c.rotate(q.rot + q.vr * age); const k2 = (.6 + .4 * smooth(age / .3)) * zf; c.scale(k2, k2);
-    c.font = `700 ${q.size.toFixed(1)}px Kalam`; c.fillText(q.txt, 0, 0); c.restore();
+    c.font = `600 ${(q.size * .9).toFixed(1)}px Geist`; c.fillText(q.txt, 0, 0); c.restore();
   }
   c.restore(); c.globalAlpha = 1;
   const em = 1 - seg(t, S[2] + .05, S[2] + .8);
