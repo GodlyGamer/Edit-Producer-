@@ -822,7 +822,7 @@ function s8(t) {
   LeQ.forEach((l, i) => rise(l, spring(t - (i < 3 ? beat(53.5) + i * BT / 4 : beat(54.5) + (i - 3) * BT / 4), 12, .8)));
   const rw = 520 * ease(seg(t, beat(55), beat(56))); const er = $('erule'); er.style.width = rw + 'px'; er.style.left = (720 - rw / 2) + 'px';
   const line = 'Learn · Practise · Papers — out today', n = Math.floor(seg(t, beat(55.5), beat(57.2)) * line.length);
-  $('etype').textContent = line.slice(0, n);
+  $('etype').innerHTML = line.slice(0, n) + '<span style="opacity:0">' + line.slice(n) + '</span>'; // fixed layout: no sideways shift while typing
   $('etype').style.opacity = t > beat(55.5) ? 1 : 0;
 }
 
