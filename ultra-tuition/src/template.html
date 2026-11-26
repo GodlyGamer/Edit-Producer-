@@ -345,6 +345,8 @@ const STEM = Array.from({ length: 70 }, () => ({ h0: R0(), xj: R0() * 2 - 1, s: 
 const BASE = Array.from({ length: 120 }, () => ({ ps: R0() * 6.283, rf: .62 + R0() * .42, s: .6 + R0() * .8, v: (R0() * 3) | 0 }));
 const EMB = Array.from({ length: 170 }, () => ({ x: R0() * 2 - 1, o: R0(), v: .08 + R0() * .16, h: .5 + R0() * .9, s: 1.4 + R0() * 3, c: R0() }));
 const BOKEH = Array.from({ length: 38 }, () => ({ x: R0() * W, y: R0() * H, d: .3 + R0() * .7, s: 70 + R0() * 240, c: (R0() * 3) | 0, a: .1 + R0() * .2, f: R0() * 6 }));
+const SCRUB = []; for (let x = -100; x < 3600; x += 40 + R0() * 120) SCRUB.push({ x, w: 14 + R0() * 40, h: 4 + R0() * 14, t: R0() < .14 });
+const EMC = Array.from({ length: 10 }, (_, i) => ({ b: i === 0 ? beat(11) : beat(9.25 + i * .85), hero: i === 0, ang: -Math.PI / 2 + ((i * .618) % 1 - .5) * 2.8, sp: 380 + R0() * 260, s: 34 + R0() * 26, rot: (R0() - .5) * .5, vr: (R0() - .5) * .4 }));
 const EQS = ['E=mc²', 'π', '∫', '√2', 'x²', 'a²+b²', 'F=ma', '∞', 'πr²', 'dy/dx', '½mv²', 'y=mx+c', 'c²', 'f(x)', '3.14', '1+1=2'];
 const EQP = []; for (let k = 19; k <= 25; k++) for (let j = 0; j < 4; j++) EQP.push({ b: beat(k) + j * .09, side: j % 2 ? 1 : -1, txt: EQS[(k * 4 + j) % EQS.length], ang: (R0() - .5) * 1.8, sp: 260 + R0() * 260, up: 60 + R0() * 220, rot: (R0() - .5) * .5, vr: (R0() - .5) * .5, size: 28 + R0() * 22, mix: .45 + R0() * .45 });
 const ROUTE = [[140, 930], [190, 790], [160, 640], [290, 520], [420, 430]];
@@ -506,28 +508,32 @@ function drawFigure(c, x, p, ph, sc, you, run = 0) {
 }
 
 // ---------- S1 evolution
-function sunset(c, t, kb) {
+function sunset(c, t, kb, pan = 0) {
   const g = c.createLinearGradient(0, 0, 0, G);
   g.addColorStop(0, '#050812'); g.addColorStop(.38, '#0F2350'); g.addColorStop(.7, '#7A3550'); g.addColorStop(.92, '#FF6A24'); g.addColorStop(1, '#FFB061');
   c.fillStyle = g; c.fillRect(0, 0, W, G);
   c.fillStyle = '#fff';
-  for (const s of STARS) { c.globalAlpha = s.a * (.6 + .4 * Math.sin(t * s.f + s.p)) * (1 - kb) * (1 - s.y / 520); c.fillRect(s.x, s.y, s.r, s.r); }
+  for (const s of STARS) { c.globalAlpha = s.a * (.6 + .4 * Math.sin(t * s.f + s.p)) * (1 - kb) * (1 - s.y / 520); c.fillRect(((s.x - pan * .12) % W + W) % W, s.y, s.r, s.r); }
   c.globalAlpha = 1;
   const bp = t > 1.3 ? beatPulse(t, .16) : 0;
-  const R = 250 + 26 * seg(t, 1, 4.29) + 10 * bp + 280 * kb, sy = G + 30 - 26 * seg(t, .9, 4.29);
-  c.save(); c.globalCompositeOperation = 'lighter'; sprite(c, GL.sun, CX, sy, R * 4.4, R * 3.2, .5 + .2 * bp + .5 * kb); c.restore();
-  const sg = c.createRadialGradient(CX, sy - R * .25, R * .1, CX, sy, R);
+  const R = 250 + 26 * seg(t, 1, 4.29) + 10 * bp + 280 * kb, sy = G + 30 - 26 * seg(t, .9, 4.29), sx = CX - pan * .35 * (1 - kb);
+  c.save(); c.globalCompositeOperation = 'lighter'; sprite(c, GL.sun, sx, sy, R * 4.4, R * 3.2, .5 + .2 * bp + .5 * kb); c.restore();
+  const sg = c.createRadialGradient(sx, sy - R * .25, R * .1, sx, sy, R);
   sg.addColorStop(0, '#FFF7E2'); sg.addColorStop(.55, '#FFC46A'); sg.addColorStop(1, '#FF6A24');
-  c.fillStyle = sg; c.beginPath(); c.arc(CX, sy, R, 0, 7); c.fill();
-  for (const w of WISPS) { const x = ((w.x + w.v * t) % (W + w.w)) - w.w / 2; sprite(c, GL.rose, x, w.y, w.w, 40, w.a * (1 - kb)); }
+  c.fillStyle = sg; c.beginPath(); c.arc(sx, sy, R, 0, 7); c.fill();
+  for (const w of WISPS) { const x = (((w.x + w.v * t - pan * .25) % (W + w.w)) + W + w.w) % (W + w.w) - w.w / 2; sprite(c, GL.rose, x, w.y, w.w, 40, w.a * (1 - kb)); }
 }
 function s1(t) {
   const on = t < S[1]; show($('c1'), on); if (!on) return;
   const c = bc;
   c.fillStyle = '#07080B'; c.fillRect(0, 0, W, H);
   grid(c, .07 * (1 - smooth(seg(t, 1.0, 1.6))));
+  // camera pans to follow the sprinter once he's away (softplus = no jolt when it starts)
+  const rt4 = Math.max(0, t - beat(6)), pan = 520 * rt4 * rt4 + 330 * smooth(seg(t, beat(6), beat(7.4)));
   const open = eOutExpo(seg(t, beat(2), beat(2) + .7)), kb = eIn3(seg(t, beat(8) - .25, S[1]));
-  if (open > 0) { const top = G * (1 - open); c.save(); c.beginPath(); c.rect(0, top, W, G - top); c.clip(); sunset(c, t, kb); c.restore(); }
+  if (open > 0) { const top = G * (1 - open); c.save(); c.beginPath(); c.rect(0, top, W, G - top); c.clip(); sunset(c, t, kb, pan);
+    c.fillStyle = '#050407'; for (const b of SCRUB) { const x = b.x - pan; if (x < -60 || x > W + 60) continue; if (b.t) { c.beginPath(); for (let j = -3; j <= 3; j++) { c.moveTo(x + j * 3 - 2, G + 1); c.lineTo(x + j * 6 + j * j * .6, G - b.h * (2.4 - Math.abs(j) * .45)); c.lineTo(x + j * 3 + 2, G + 1); } c.fill(); } else { c.beginPath(); c.ellipse(x, G + 2, b.w, b.h, 0, Math.PI, 2 * Math.PI); c.fill(); } }
+    c.restore(); }
   c.fillStyle = '#050407'; c.fillRect(0, G, W, H - G);
   const ll = eOutExpo(seg(t, beat(1), beat(1) + .42));
   if (ll > 0) {
@@ -543,10 +549,10 @@ function s1(t) {
     const f = FIG[i], k = spring(t - beat(2.5 + i * .5), 12, .78); const a = clamp(k * 1.5);
     // the modern human breaks into a sprint on beat 6 and leaves frame before the flash
     const run = i === 4 ? smooth(seg(t, beat(6), beat(6.6))) : 0, rt = i === 4 ? Math.max(0, t - beat(6)) : 0, dx = 520 * rt * rt;
-    FLAB[i].style.opacity = a * (i === 4 ? 1 - seg(t, beat(6), beat(6.4)) : 1); FLAB[i].style.transform = `translateX(calc(-50% + ${(drift - 40 * (1 - k)).toFixed(1)}px))`;
+    FLAB[i].style.opacity = a * (i === 4 ? 1 - seg(t, beat(6), beat(6.4)) : 1); FLAB[i].style.transform = `translateX(calc(-50% + ${(drift - 40 * (1 - k) - pan).toFixed(1)}px))`;
     if (a <= .001) continue;
     const ph = (t - beat(0)) / (4 * BT) * Math.PI * 2 + i * Math.PI / 2 + 2 * Math.PI * 1.6 * rt * rt;
-    c.globalAlpha = a; drawFigure(c, f.cx - lerp(52, 9, f.p) + drift - 40 * (1 - k) + dx, f.p, ph, f.sc, i === 4, run); c.globalAlpha = 1;
+    c.globalAlpha = a; drawFigure(c, f.cx - lerp(52, 9, f.p) + drift - 40 * (1 - k) + dx - pan, f.p, ph, f.sc, i === 4, run); c.globalAlpha = 1;
   }
   if (kb > 0) { c.fillStyle = `rgba(255,248,236,${kb * kb})`; c.fillRect(0, 0, W, H); }
   const lab = $('lab0'), n = Math.round(29 * seg(t, beat(1) + .06, beat(2) - .06));
@@ -592,6 +598,20 @@ function s2(t) {
   const sg = seg(tau, .05, 1.8); if (sg < 1) { const rs = 1900 * Math.pow(eOut3(sg), .9); c.strokeStyle = `rgba(255,214,170,${.9 * (1 - sg)})`; c.lineWidth = 4; c.beginPath(); c.ellipse(cx, G + 4, rs, rs * .04, 0, 0, 7); c.stroke(); }
   for (const e of EMB) { const age = (tau * e.v + e.o) % 1, x = cx + e.x * 700 * (.25 + age) + Math.sin(age * 6 + e.o * 10) * 20, y = G - 30 - age * 650 * e.h; const a = Math.sin(age * Math.PI) * (.4 + .6 * heat) * smooth(tau / .5); c.fillStyle = e.c < .5 ? `rgba(255,190,120,${a})` : `rgba(255,120,60,${a})`; c.beginPath(); c.arc(x, y, e.s, 0, 7); c.fill(); }
   c.restore();
+  // E = mc² bursts out of the fireball in slow motion (one hero copy flies at the camera)
+  c.save(); c.textAlign = 'center'; c.textBaseline = 'middle'; c.shadowColor = 'rgba(255,130,40,.95)'; c.shadowBlur = 22; c.fillStyle = '#FFF1D6';
+  const capOut = 1 - seg(t, beat(17.5) - .1, beat(17.5) + .1);
+  for (const q of EMC) {
+    const age = t - q.b; if (age < 0 || age > 3.2) continue;
+    const kq = 1 - Math.exp(-(q.b - S[1]) * .55), ox = cx, oy = G - 70 - 420 * kq;
+    let x, y, sc, a;
+    if (q.hero) { const u = age / 1.9; x = lerp(ox, 720, smooth(u)); y = lerp(oy, 600, smooth(u)); sc = .4 + 5.5 * Math.pow(clamp(u), 2.2); a = smooth(age / .2) * (1 - smooth((u - .7) / .3)); }
+    else { const d = (1 - Math.exp(-age * .9)) / .9; x = ox + Math.cos(q.ang) * q.sp * d; y = oy + Math.sin(q.ang) * q.sp * d; sc = .5 + .5 * smooth(age / .5) + .12 * age; a = smooth(age / .15) * (1 - smooth((age - 1.9) / 1.2)); }
+    a *= capOut; if (a <= .003) continue;
+    c.globalAlpha = a; c.save(); c.translate(x, y); c.rotate(q.hero ? 0 : q.rot + q.vr * age); c.scale(sc, sc);
+    c.font = `700 ${q.hero ? 64 : q.s.toFixed(1)}px Kalam`; c.fillText('E = mc²', 0, 0); c.restore();
+  }
+  c.restore(); c.globalAlpha = 1;
   const fl = Math.exp(-tau * 4.5); if (fl > .002) { c.fillStyle = `rgba(255,248,236,${fl})`; c.fillRect(0, 0, W, H); }
   const pre = eIn3(seg(t, beat(16), S[2])) * .25; if (pre > 0) { c.save(); c.globalCompositeOperation = 'lighter'; sprite(c, GL.hot, cx, cy, 1600, 1600, pre); c.restore(); }
   const fk = eIn3(seg(t, beat(17.5), S[2])); if (fk > 0) { c.fillStyle = '#FFF8EE'; c.beginPath(); c.arc(cx, cy, fk * 2000, 0, 7); c.fill(); }
